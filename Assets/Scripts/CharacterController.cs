@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private bool isGrounded;
     private float fireCooldown;
-    private bool facingRight = true;
+    private bool facingLeft = true;
 
     // ?? New Input System: cached input values read from callbacks ??
     private Vector2 moveInput;
@@ -65,6 +65,7 @@ public class PlayerController : MonoBehaviour
 
         // Reset the one-frame jump flag after it has been consumed
         jumpPressed = false;
+        fireHeld = false;
     }
 
     void HandleMovement()
@@ -72,8 +73,8 @@ public class PlayerController : MonoBehaviour
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
         rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
 
-        if (moveInput.x > 0 && !facingRight) Flip();
-        else if (moveInput.x < 0 && facingRight) Flip();
+        if (moveInput.x > 0 && facingLeft) Flip();
+        else if (moveInput.x < 0 && !facingLeft) Flip();
     }
 
     void HandleJump()
@@ -95,14 +96,14 @@ public class PlayerController : MonoBehaviour
             // Spawn from firePoint if assigned, otherwise fall back to transform
             Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
             Instantiate(bulletPrefab, spawnPos, Quaternion.identity)
-                .GetComponent<Bullet>().SetDirection(facingRight ? Vector2.right : Vector2.left);
+                .GetComponent<Bullet>().SetDirection(facingLeft ? Vector2.left : Vector2.right);
             //AudioManager.Instance.PlayShoot();
         }
     }
 
     void Flip()
     {
-        facingRight = !facingRight;
+        facingLeft = !facingLeft;
         transform.localScale = new Vector3(
             -transform.localScale.x,
             transform.localScale.y,
