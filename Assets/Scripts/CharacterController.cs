@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEngine.Rendering.DebugUI;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -24,9 +25,13 @@ public class PlayerController : MonoBehaviour
     private bool facingLeft = true;
 
     // ?? New Input System: cached input values read from callbacks ??
+    [SerializeField] private GameObject flashlight;
     private Vector2 moveInput;
-    private bool jumpPressed;
-    private bool fireHeld;
+    private Vector2 lookDirection = new Vector2(1, 0);
+    private bool jumpHeld;
+    private bool jumpPeaked;
+    private bool firePressed;
+    private bool aimHeld;
 
     void Awake() => rb = GetComponent<Rigidbody2D>();
 
@@ -44,34 +49,70 @@ public class PlayerController : MonoBehaviour
     public void OnJump(InputValue value)
     {
         // GetButtonDown equivalent: only flag true on the press phase
-        if (value.isPressed)
-            jumpPressed = true;
+        jumpHeld = value.isPressed;
     }
 
     /// <summary>Called by PlayerInput when the Fire action fires.</summary>
     public void OnFire(InputValue value)
     {
         // GetButton equivalent: track held state
-        fireHeld = value.isPressed;
+        firePressed = value.isPressed;
     }
 
-    void Update()
+    public void OnAim(InputValue value)
     {
+        aimHeld = value.isPressed;
+    }
+
+    public void OnLook(InputValue value)
+    {
+        Vector2 lightScreenPos = UnityEngine.Camera.main.WorldToScreenPoint(flashlight.transform.position);
+        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+
+        Vector2 lookDirection = (mouseScreenPos - lightScreenPos).normalized;
+        float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
+        flashlight.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+    }
+
+    void FixedUpdate()
+    {
+        HandleAim();
         HandleMovement();
+        
         HandleJump();
         HandleShooting();
 
         fireCooldown -= Time.deltaTime;
 
         // Reset the one-frame jump flag after it has been consumed
-        jumpPressed = false;
-        fireHeld = false;
+        firePressed = false;
+    }
+
+    void HandleAim()
+    {
+        if (aimHeld && isGrounded)
+        {
+            if (moveInput.x > 0 && facingLeft) Flip();
+            else if (moveInput.x < 0 && !facingLeft) Flip();
+
+            // TODO: gun and eyes should follow aim direction
+
+        }
     }
 
     void HandleMovement()
     {
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
-        rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
+        if (!aimHeld && moveInput.x != 0)
+        {
+            rb.linearVelocityX += moveInput.x;
+            rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
+        }
+        else
+        {
+            rb.linearVelocityX *= 0.8f; // simple friction when no input
+        }
+        //rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
 
         if (moveInput.x > 0 && facingLeft) Flip();
         else if (moveInput.x < 0 && !facingLeft) Flip();
@@ -81,16 +122,25 @@ public class PlayerController : MonoBehaviour
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        if (jumpPressed && isGrounded)
+        if (jumpHeld && isGrounded)
         {
+            jumpPeaked = false;
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             //AudioManager.Instance.PlayJump();
+        }
+        if (!jumpPeaked)
+        {
+            if (!jumpHeld && rb.linearVelocity.y > 0)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+                jumpPeaked = true;
+            }
         }
     }
 
     void HandleShooting()
     {
-        if (fireHeld && fireCooldown <= 0f)
+        if (firePressed && fireCooldown <= 0f)
         {
             fireCooldown = fireRate;
             // Spawn from firePoint if assigned, otherwise fall back to transform

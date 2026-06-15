@@ -34,8 +34,5 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // Destroy on anything else (walls, ground)
-        if (!other.isTrigger)
-            Destroy(gameObject);
     }
 }
