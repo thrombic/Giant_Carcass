@@ -27,7 +27,6 @@ public class PlayerController : MonoBehaviour
     // ?? New Input System: cached input values read from callbacks ??
     [SerializeField] private GameObject flashlight;
     private Vector2 moveInput;
-    private Vector2 lookDirection = new Vector2(1, 0);
     private bool jumpHeld;
     private bool jumpPeaked;
     private bool firePressed;
@@ -76,9 +75,9 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        HandleJetpack();
         HandleAim();
         HandleMovement();
-        
         HandleJump();
         HandleShooting();
 
@@ -86,6 +85,11 @@ public class PlayerController : MonoBehaviour
 
         // Reset the one-frame jump flag after it has been consumed
         firePressed = false;
+    }
+
+    void HandleJetpack()
+    {
+        // TODO: while jetpacking, increase change in x and/or y velocity based on input, and reduce fuel
     }
 
     void HandleAim()
@@ -108,7 +112,7 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocityX += moveInput.x;
             rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
         }
-        else
+        else if (isGrounded)
         {
             rb.linearVelocityX *= 0.8f; // simple friction when no input
         }

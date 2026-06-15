@@ -19,7 +19,7 @@
                     "name": "Look",
                     "type": "Value",
                     "id": "6b444451-8a00-4d00-a97e-f47457f736a8",
-                    "expectedControlType": "",
+                    "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
@@ -37,7 +37,7 @@
                     "name": "Interact",
                     "type": "Button",
                     "id": "852140f2-7766-474d-8707-702459ba45f3",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "Hold",
                     "initialStateCheck": false
@@ -64,7 +64,7 @@
                     "name": "Previous",
                     "type": "Button",
                     "id": "2776c80d-3c14-4091-8c56-d04ced07a2b0",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -90,7 +90,7 @@
                 {
                     "name": "Aim",
                     "type": "Button",
-                    "id": "f5c7651e-8acd-492b-8409-2f9045ef47a2",
+                    "id": "8d821942-ece6-4d82-9c24-714ce1186f1b",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "Press(behavior=2)",
@@ -485,7 +485,7 @@
                 },
                 {
                     "name": "",
-                    "id": "a98f513b-a7de-454a-8f3f-a5b5b46652a9",
+                    "id": "168550f0-3502-48e8-a13d-a63608637642",
                     "path": "<Keyboard>/leftShift",
                     "interactions": "",
                     "processors": "",
