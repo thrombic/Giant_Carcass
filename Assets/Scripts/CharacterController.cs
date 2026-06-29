@@ -26,11 +26,15 @@ public class PlayerController : MonoBehaviour
 
     // ?? New Input System: cached input values read from callbacks ??
     [SerializeField] private GameObject flashlight;
+    [SerializeField] private GameObject jets;
+
     private Vector2 moveInput;
     private bool jumpHeld;
     private bool jumpPeaked;
     private bool firePressed;
     private bool aimHeld;
+    private bool jetpackHeld;
+    [SerializeField] private int fuel = 300;
 
     void Awake() => rb = GetComponent<Rigidbody2D>();
 
@@ -65,19 +69,23 @@ public class PlayerController : MonoBehaviour
 
     public void OnLook(InputValue value)
     {
-        Vector2 lightScreenPos = UnityEngine.Camera.main.WorldToScreenPoint(flashlight.transform.position);
+        /*Vector2 lightScreenPos = UnityEngine.Camera.main.WorldToScreenPoint(flashlight.transform.position);
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
 
         Vector2 lookDirection = (mouseScreenPos - lightScreenPos).normalized;
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
-        flashlight.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+        flashlight.transform.rotation = Quaternion.Euler(0, 0, angle - 90);*/
+    }
+    public void OnJetpack(InputValue value)
+    {
+        jetpackHeld = value.isPressed;
     }
 
     void FixedUpdate()
     {
-        HandleJetpack();
         HandleAim();
         HandleMovement();
+        HandleJetpack();
         HandleJump();
         HandleShooting();
 
@@ -89,7 +97,21 @@ public class PlayerController : MonoBehaviour
 
     void HandleJetpack()
     {
-        // TODO: while jetpacking, increase change in x and/or y velocity based on input, and reduce fuel
+        // while jetpacking, increase change in x and/or y velocity based on input, and reduce fuel
+        if (jetpackHeld && moveInput != Vector2.zero && fuel > 0)
+        {
+            float angle = Mathf.Atan2(-moveInput.y, -moveInput.x) * Mathf.Rad2Deg;
+            if (facingLeft)
+                angle -= 180;
+
+            jets.transform.rotation = Quaternion.Euler(0, 0, angle);
+            jets.SetActive(true);
+
+            rb.AddForce(moveInput * 15);
+            fuel -= 1;
+        }
+        else
+            jets.SetActive(false);
     }
 
     void HandleAim()
@@ -110,16 +132,35 @@ public class PlayerController : MonoBehaviour
         if (!aimHeld && moveInput.x != 0)
         {
             rb.linearVelocityX += moveInput.x;
-            rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
+            if (jetpackHeld)
+                rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed * 2, moveSpeed * 2);
+            else
+                rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
         }
         else if (isGrounded)
         {
             rb.linearVelocityX *= 0.8f; // simple friction when no input
+            fuel += 10;
+            if (fuel > 300) fuel = 300;
         }
         //rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
 
         if (moveInput.x > 0 && facingLeft) Flip();
         else if (moveInput.x < 0 && !facingLeft) Flip();
+
+        HandleLight();
+    }
+
+    void HandleLight()
+    {
+        float angle = facingLeft ? 90: -90;
+        if (moveInput != Vector2.zero)
+        {
+            angle = Mathf.Atan2(moveInput.y, moveInput.x) * Mathf.Rad2Deg;
+            flashlight.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+        }
+        else
+            flashlight.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
     void HandleJump()
@@ -149,8 +190,9 @@ public class PlayerController : MonoBehaviour
             fireCooldown = fireRate;
             // Spawn from firePoint if assigned, otherwise fall back to transform
             Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
+            Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
             Instantiate(bulletPrefab, spawnPos, Quaternion.identity)
-                .GetComponent<Bullet>().SetDirection(facingLeft ? Vector2.left : Vector2.right);
+                .GetComponent<Bullet>().SetDirection(spawnDir);
             //AudioManager.Instance.PlayShoot();
         }
     }
