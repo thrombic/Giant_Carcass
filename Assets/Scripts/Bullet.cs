@@ -24,6 +24,15 @@ public class Bullet : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        // Try to hit an enemy
+        EnemyBase enemy = other.GetComponent<EnemyBase>();
+        if (enemy != null)
+        {
+            enemy.TakeDamage(1);
+            Destroy(gameObject);
+            return;
+        }
+
         // Try to hit a door
         Door door = other.GetComponent<Door>();
         if (door != null)
