@@ -12,7 +12,7 @@ public class Bullet : MonoBehaviour
         direction = dir.normalized;
         // Flip sprite if going left
         if (dir.x < 0)
-            transform.localScale = new Vector3(-1, 1, 1);
+            transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
     }
 
     void Update()
@@ -43,8 +43,5 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // Destroy on anything else (walls, ground)
-        if (!other.isTrigger)
-            Destroy(gameObject);
     }
 }
