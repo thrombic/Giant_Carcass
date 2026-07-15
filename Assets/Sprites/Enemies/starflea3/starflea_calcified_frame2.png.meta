@@ -1,10 +1,7 @@
 fileFormatVersion: 2
-guid: f44530a9a85f46808392f0399bce9099
+guid: 082a1db502334f889418e9cd7eca9cfe
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 21300000
-    second: enemy1_zoomer_basic1
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -98,29 +95,7 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: enemy1_zoomer_basic1
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 398
-        height: 283
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 0f3627a47a0e427d0800000000000000
-      internalID: 21300000
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
+    sprites: []
     outline: []
     customData: 
     physicsShape: []
@@ -134,8 +109,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      enemy1_zoomer_basic1: 21300000
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

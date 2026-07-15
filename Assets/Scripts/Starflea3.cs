@@ -1,9 +1,18 @@
-public class Zoomer3 : ZoomerBase
+public class Starflea3 : StarfleaBase
 {
     protected override void Awake()
     {
         base.Awake();
         isInvulnerable = true;
+    }
+
+    void OnValidate()
+    {
+        isInvulnerable = true;
+    }
+
+    public override void TakeDamage(int amount)
+    {
     }
 
     protected override float CurrentSpeed()
