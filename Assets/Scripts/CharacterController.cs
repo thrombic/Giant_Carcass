@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Shooting")]
     public GameObject bulletPrefab;
+    public GameObject flarePrefab;
     public Transform firePoint;
     public float fireRate = 0.25f;
 
@@ -31,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveInput;
     private bool jumpHeld;
     private bool jumpPeaked;
+    private bool flarePressed;
     private bool firePressed;
     private bool aimHeld;
     private bool jetpackHeld;
@@ -55,6 +57,11 @@ public class PlayerController : MonoBehaviour
     {
         // GetButtonDown equivalent: only flag true on the press phase
         jumpHeld = value.isPressed;
+    }
+
+    public void OnFlare(InputValue value)
+    {
+        flarePressed = value.isPressed;
     }
 
     /// <summary>Called by PlayerInput when the Fire action fires.</summary>
@@ -89,6 +96,7 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleJetpack();
         HandleJump();
+        HandleFlare();
         HandleShooting();
 
         fireCooldown -= Time.deltaTime;
@@ -197,6 +205,20 @@ public class PlayerController : MonoBehaviour
             Instantiate(bulletPrefab, spawnPos, Quaternion.identity)
                 .GetComponent<Bullet>().SetDirection(spawnDir);
             //AudioManager.Instance.PlayShoot();*/
+        }
+    }
+
+    void HandleFlare()
+    {
+        if (flarePressed && fireCooldown <= 0f)
+        {
+            fireCooldown = fireRate * 2;
+            Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
+            Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
+            Instantiate(flarePrefab, spawnPos, Quaternion.identity)
+                .GetComponent<Flare>().SetDirection(spawnDir);
+
+            flarePressed = false;
         }
     }
 

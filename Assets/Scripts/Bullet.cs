@@ -15,7 +15,7 @@ public class Bullet : MonoBehaviour
             transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
     }
 
-    void Update()
+    void FixedUpdate()
     {
         transform.Translate(direction * speed * Time.deltaTime);
         lifetime -= Time.deltaTime;

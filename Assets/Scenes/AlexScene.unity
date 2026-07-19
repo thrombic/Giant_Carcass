@@ -6070,7 +6070,8 @@ MonoBehaviour:
   moveSpeed: 6
   jumpForce: 9
   bulletPrefab: {fileID: 7370048508838941359, guid: 7fc9d0a326666f04c9c731724c748cfa, type: 3}
-  firePoint: {fileID: 0}
+  flarePrefab: {fileID: 5942979022005339880, guid: 6c0526b5e23e9f340a2a7c905c6ce8b3, type: 3}
+  firePoint: {fileID: 645428465}
   fireRate: 0.25
   groundCheck: {fileID: 2082459082}
   groundCheckRadius: 0.1
