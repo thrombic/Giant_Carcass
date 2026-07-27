@@ -9,8 +9,14 @@ public class Flare : MonoBehaviour
 
     private LightningOrb orb;
     private Light2D light;
+    private Rigidbody2D rb;
 
     private bool collided = false;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
 
     private void Start()
     {
@@ -28,24 +34,30 @@ public class Flare : MonoBehaviour
             speed = 0;
             collided = true;
         }
-        
-        // if hit another object, reparent to that object and stop moving, then start pulsing
+
+        GameObject newParent = collision.gameObject;
+
+        // when hit another object, reparent to that object and stop moving, then start pulsing
+        rb.gravityScale = 0;
+        rb.linearVelocity = Vector2.zero;
+        GetComponent<Collider2D>().enabled = false;
+        transform.SetParent(newParent.transform);
+        transform.localRotation = Quaternion.identity;
+        transform.localScale = new Vector3(
+            1/newParent.transform.lossyScale.x,
+            1/newParent.transform.lossyScale.y,
+            1/newParent.transform.lossyScale.z
+        );
+
         StartCoroutine("StartPulsing");
     }
 
     IEnumerator StartPulsing()
     {
-        // call pulse every 5 seconds for 20 seconds, then destroy the flare
-        for (int pulseCount = 0; pulseCount < 4; pulseCount++)
-        {
-            yield return new WaitForSeconds(2f);
-            orb.Activate();
-            light.enabled = true;
-            yield return new WaitForSeconds(1f);
-            orb.Deactivate();
-            light.enabled = false;
-            yield return new WaitForSeconds(2f);
-        }
+        yield return new WaitForSeconds(1f);
+        orb.Activate();
+        light.enabled = true;
+        yield return new WaitForSeconds(15f);
 
         Destroy(gameObject);
         yield return null;

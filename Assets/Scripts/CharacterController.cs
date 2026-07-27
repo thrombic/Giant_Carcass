@@ -103,6 +103,7 @@ public class PlayerController : MonoBehaviour
 
         // Reset the one-frame jump flag after it has been consumed
         firePressed = false;
+        flarePressed = false;
     }
 
     void HandleJetpack()
@@ -197,14 +198,14 @@ public class PlayerController : MonoBehaviour
     {
         if (firePressed && fireCooldown <= 0f)
         {
-            lightningBeam.StartFiring();
-            /*fireCooldown = fireRate;
+            //lightningBeam.StartFiring();
+            fireCooldown = fireRate;
             // Spawn from firePoint if assigned, otherwise fall back to transform
             Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
             Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
             Instantiate(bulletPrefab, spawnPos, Quaternion.identity)
                 .GetComponent<Bullet>().SetDirection(spawnDir);
-            //AudioManager.Instance.PlayShoot();*/
+            //AudioManager.Instance.PlayShoot();
         }
     }
 
@@ -217,8 +218,6 @@ public class PlayerController : MonoBehaviour
             Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
             Instantiate(flarePrefab, spawnPos, Quaternion.identity)
                 .GetComponent<Flare>().SetDirection(spawnDir);
-
-            flarePressed = false;
         }
     }
 
