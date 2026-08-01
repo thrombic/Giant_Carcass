@@ -33,6 +33,7 @@ public class Flare : MonoBehaviour
         {
             speed = 0;
             collided = true;
+            print("Flare collided with " + collision.gameObject.name);
         }
 
         GameObject newParent = collision.gameObject;
@@ -42,11 +43,12 @@ public class Flare : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         GetComponent<Collider2D>().enabled = false;
         transform.SetParent(newParent.transform);
+        rb.bodyType = RigidbodyType2D.Kinematic;
         transform.localRotation = Quaternion.identity;
         transform.localScale = new Vector3(
-            1/newParent.transform.lossyScale.x,
-            1/newParent.transform.lossyScale.y,
-            1/newParent.transform.lossyScale.z
+            1 / newParent.transform.lossyScale.x,
+            1 / newParent.transform.lossyScale.y,
+            1 / newParent.transform.lossyScale.z
         );
 
         StartCoroutine("StartPulsing");
@@ -82,6 +84,9 @@ public class Flare : MonoBehaviour
 
     void FixedUpdate()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
+        if (!collided)
+            transform.Translate(direction * speed * Time.deltaTime);
+        /*else if (hitTransform != null)
+            transform.position = hitTransform.position;*/
     }
 }

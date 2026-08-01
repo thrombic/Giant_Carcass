@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class ZoomerBase : EnemyBase
+public class StarfleaBase : EnemyBase
 {
     [Header("Surface Movement")]
     public float moveSpeed = 1.5f;
@@ -11,6 +11,11 @@ public class ZoomerBase : EnemyBase
     public float cornerLookAhead = 0.08f;
     public float surfaceSnapDistance = 0.2f;
     public float skinWidth = 0.03f;
+
+    [Header("Airborne")]
+    public float airborneGravityScale = 1f;
+    public float landingProbeDistance = 0.25f;
+    public Sprite fallingSprite;
 
     [Header("Movement Animation")]
     public Sprite[] movementSprites;
@@ -23,6 +28,7 @@ public class ZoomerBase : EnemyBase
     protected Vector2 surfNormal = Vector2.up;
     protected bool isStopped;
 
+    private bool isAttachedToSurface;
     private SpriteRenderer spriteRenderer;
     private Collider2D ownCollider;
     private Vector3 baseScale;
@@ -34,20 +40,19 @@ public class ZoomerBase : EnemyBase
         base.Awake();
 
         rb = GetComponent<Rigidbody2D>();
-        rb.bodyType = RigidbodyType2D.Kinematic;
-        rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         ownCollider = GetComponent<Collider2D>();
         baseScale = transform.localScale;
         ApplyVisualSorting();
+        SetAirbornePhysics();
     }
 
     protected virtual void Start()
     {
-        AttachToNearestSurface();
-        ApplyMovementSprite(0);
+        if (!TryAttachToNearestSurface())
+            BeginAirborne();
     }
 
     protected virtual void Update()
@@ -57,7 +62,16 @@ public class ZoomerBase : EnemyBase
 
     void FixedUpdate()
     {
-        if (isDead || isStopped)
+        if (isDead)
+            return;
+
+        if (!isAttachedToSurface)
+        {
+            AirborneStep();
+            return;
+        }
+
+        if (isStopped)
             return;
 
         SurfaceStep();
@@ -68,12 +82,32 @@ public class ZoomerBase : EnemyBase
         Vector2 position = rb.position;
         moveDir = SurfaceTangent(surfNormal) * MovementSign();
 
-        if (!TryTurnIntoWall(ref position) && IsApproachingOuterCorner(position))
-            WrapOuterCorner(ref position);
+        if (!TryTurnIntoWall(ref position) && IsApproachingOuterCorner(position) && !TryWrapOuterCorner(ref position))
+        {
+            BeginAirborne();
+            return;
+        }
 
-        SnapToSurface(ref position);
+        if (!SnapToSurface(ref position))
+        {
+            BeginAirborne();
+            return;
+        }
+
         rb.MovePosition(position + moveDir * CurrentSpeed() * Time.fixedDeltaTime);
         ApplyOrientation();
+    }
+
+    void AirborneStep()
+    {
+        ShowFallingSprite();
+
+        float velocityProbe = Mathf.Max(0f, -rb.linearVelocity.y) * Time.fixedDeltaTime;
+        float distance = bodyRadius + Mathf.Max(0f, landingProbeDistance) + skinWidth + velocityProbe;
+        RaycastHit2D landingSurface = CastSurface(rb.position, Vector2.down, distance);
+
+        if (landingSurface.collider != null)
+            AttachToSurface(landingSurface);
     }
 
     protected virtual float CurrentSpeed()
@@ -107,7 +141,7 @@ public class ZoomerBase : EnemyBase
         return CastSurface(probeOrigin, -surfNormal, probeDistance).collider == null;
     }
 
-    void WrapOuterCorner(ref Vector2 position)
+    bool TryWrapOuterCorner(ref Vector2 position)
     {
         int sign = MovementSign();
         Vector2 cornerPoint = position + moveDir * bodyRadius - surfNormal * bodyRadius;
@@ -125,26 +159,25 @@ public class ZoomerBase : EnemyBase
             surfNormal = nextSurface.normal.normalized;
             moveDir = SurfaceTangent(surfNormal) * sign;
             position = nextSurface.point + surfNormal * bodyRadius + moveDir * skinWidth;
-            return;
+            return true;
         }
 
-        surfNormal = nextNormal;
-        moveDir = nextMoveDir;
-        position = cornerPoint + surfNormal * bodyRadius + moveDir * skinWidth;
+        return false;
     }
 
-    void SnapToSurface(ref Vector2 position)
+    bool SnapToSurface(ref Vector2 position)
     {
         Vector2 origin = position + surfNormal * skinWidth;
         float distance = bodyRadius + Mathf.Max(0f, surfaceSnapDistance) + skinWidth;
         RaycastHit2D snap = CastSurface(origin, -surfNormal, distance);
 
         if (snap.collider == null)
-            return;
+            return false;
 
         surfNormal = snap.normal.normalized;
         moveDir = SurfaceTangent(surfNormal) * MovementSign();
         position = snap.point + surfNormal * bodyRadius;
+        return true;
     }
 
     static Vector2 Rotate(Vector2 value, float degrees)
@@ -174,6 +207,12 @@ public class ZoomerBase : EnemyBase
         if (isDead || isStopped || spriteRenderer == null || movementSprites == null || movementSprites.Length == 0)
             return;
 
+        if (!isAttachedToSurface)
+        {
+            ShowFallingSprite();
+            return;
+        }
+
         float frameDuration = 1f / Mathf.Max(0.01f, movementFrameRate);
         animationTimer += Time.deltaTime;
 
@@ -190,8 +229,32 @@ public class ZoomerBase : EnemyBase
         if (spriteRenderer == null || movementSprites == null || movementSprites.Length == 0)
             return;
 
+        ApplyVisualSprite(movementSprites[Mathf.Clamp(frame, 0, movementSprites.Length - 1)]);
+    }
+
+    protected void ApplyVisualSprite(Sprite sprite)
+    {
+        if (spriteRenderer == null || sprite == null)
+            return;
+
         ApplyVisualSorting();
-        spriteRenderer.sprite = movementSprites[Mathf.Clamp(frame, 0, movementSprites.Length - 1)];
+        spriteRenderer.sprite = sprite;
+    }
+
+    protected void ShowCurrentMovementSprite()
+    {
+        ApplyMovementSprite(animationFrame);
+    }
+
+    void ShowFallingSprite()
+    {
+        if (fallingSprite != null)
+        {
+            ApplyVisualSprite(fallingSprite);
+            return;
+        }
+
+        ApplyMovementSprite(0);
     }
 
     void ApplyVisualSorting()
@@ -200,22 +263,60 @@ public class ZoomerBase : EnemyBase
             spriteRenderer.sortingOrder = visualSortingOrder;
     }
 
-    void AttachToNearestSurface()
+    bool TryAttachToNearestSurface()
     {
         Vector2[] directions = { Vector2.down, Vector2.up, Vector2.left, Vector2.right };
+        float distance = bodyRadius
+            + Mathf.Max(Mathf.Max(0f, surfaceSnapDistance), Mathf.Max(0f, landingProbeDistance))
+            + skinWidth;
 
         foreach (Vector2 direction in directions)
         {
-            RaycastHit2D hit = CastSurface(transform.position, direction, 1.5f);
+            RaycastHit2D hit = CastSurface(transform.position, direction, distance);
             if (hit.collider == null)
                 continue;
 
-            surfNormal = hit.normal;
-            moveDir = SurfaceTangent(surfNormal) * MovementSign();
-            transform.position = hit.point + surfNormal * bodyRadius;
-            ApplyOrientation();
-            return;
+            AttachToSurface(hit);
+            return true;
         }
+
+        return false;
+    }
+
+    void AttachToSurface(RaycastHit2D hit)
+    {
+        isAttachedToSurface = true;
+        SetSurfaceCrawlPhysics();
+
+        surfNormal = hit.normal.normalized;
+        moveDir = SurfaceTangent(surfNormal) * MovementSign();
+        rb.position = hit.point + surfNormal * bodyRadius;
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        ApplyOrientation();
+        ShowCurrentMovementSprite();
+    }
+
+    void BeginAirborne()
+    {
+        isAttachedToSurface = false;
+        SetAirbornePhysics();
+        rb.linearVelocity = new Vector2(0f, Mathf.Min(0f, rb.linearVelocity.y));
+        transform.rotation = Quaternion.identity;
+        transform.localScale = new Vector3(Mathf.Abs(baseScale.x), baseScale.y, baseScale.z);
+        ShowFallingSprite();
+    }
+
+    void SetSurfaceCrawlPhysics()
+    {
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.gravityScale = 0f;
+    }
+
+    void SetAirbornePhysics()
+    {
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.gravityScale = Mathf.Max(0f, airborneGravityScale);
     }
 
     RaycastHit2D CastSurface(Vector2 origin, Vector2 direction, float distance)

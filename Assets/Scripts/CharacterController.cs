@@ -1,6 +1,8 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.Rendering.DebugUI;
+using static UnityEngine.UI.Image;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -17,7 +19,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Ground Check")]
     public Transform groundCheck;
-    public float groundCheckRadius = 0.1f;
+    public float groundCheckDistance = 0.1f;
     public LayerMask groundLayer;
 
     private Rigidbody2D rb;
@@ -176,7 +178,8 @@ public class PlayerController : MonoBehaviour
 
     void HandleJump()
     {
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector2.down, groundCheckDistance, groundLayer);
+        isGrounded = hit.collider != null ? true : false;
 
         if (jumpHeld && isGrounded)
         {
