@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -38,6 +39,11 @@ public class PlayerController : MonoBehaviour
     private bool firePressed;
     private bool aimHeld;
     private bool jetpackHeld;
+
+    private bool isStunned = false;
+    private bool isInvincible = false;
+    private float stunDuration = .75f;
+    private float invincibleDuration = 2f;
     [SerializeField] private int fuel = 300;
 
     [SerializeField] private LightningBeam lightningBeam;
@@ -92,8 +98,31 @@ public class PlayerController : MonoBehaviour
         jetpackHeld = value.isPressed;
     }
 
+    public void OnTriggerEnter2D(Collider2D collision)
+    {
+        // for now, assume any trigger is an enemy
+        if (!isInvincible)
+            StartCoroutine(ApplyStunAndKnockback((transform.position - collision.transform.position).normalized, 5f));
+        // TODO: change 2nd parameter (knockbackForce) based on enemy type
+    }
+
+    private IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
+    {
+        isStunned = true;
+        isInvincible = true;
+        rb.linearVelocity = direction * knockbackForce;
+
+        yield return new WaitForSeconds(stunDuration);
+        isStunned = false;
+
+        yield return new WaitForSeconds(invincibleDuration - stunDuration);
+        isInvincible = false;
+    }
+
     void FixedUpdate()
     {
+        if (isStunned) return;
+
         HandleAim();
         HandleMovement();
         HandleJetpack();
@@ -178,8 +207,9 @@ public class PlayerController : MonoBehaviour
 
     void HandleJump()
     {
-        RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector2.down, groundCheckDistance, groundLayer);
-        isGrounded = hit.collider != null ? true : false;
+        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(1, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
+        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(1, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
+        isGrounded = (hitLeft.collider != null || hitRight.collider != null) ? true : false;
 
         if (jumpHeld && isGrounded)
         {
