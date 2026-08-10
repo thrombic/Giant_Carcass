@@ -22,13 +22,18 @@ public class Bullet : MonoBehaviour
         if (lifetime <= 0f) Destroy(gameObject);
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        Destroy(gameObject);
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         // Try to hit an enemy
         EnemyBase enemy = other.GetComponent<EnemyBase>();
         if (enemy != null)
         {
-            enemy.TakeDamage(1);
+            enemy.TakeDamage(10);
             Destroy(gameObject);
             return;
         }

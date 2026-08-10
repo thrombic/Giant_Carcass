@@ -1,5 +1,7 @@
 public class Starflea3 : StarfleaBase
 {
+    private bool isInvulnerable = false;
+
     protected override void Awake()
     {
         base.Awake();

@@ -1,30 +1,41 @@
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public abstract class EnemyBase : MonoBehaviour
 {
     [Header("Stats")]
-    public int maxHealth = 3;
     public int contactDamage = 1;
-    public bool isInvulnerable = false;
+    public HealthSystem healthSystem;
 
     protected int currentHealth;
     protected bool isDead;
+    protected SpriteRenderer spriteRenderer;
+    protected Color originalColor;
 
     protected virtual void Awake()
     {
-        currentHealth = maxHealth;
+        healthSystem = gameObject.AddComponent<HealthSystem>();
+        currentHealth = healthSystem.maxHealth;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        originalColor = spriteRenderer.color;
+    }
+
+    private IEnumerator FlashRoutine()
+    {
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(.25f);
+        spriteRenderer.color = originalColor;
     }
 
     public virtual void TakeDamage(int amount)
     {
-        if (isDead || isInvulnerable || amount <= 0)
-            return;
+        if (!healthSystem.IsInvulnerable)
+        {
+            StartCoroutine(FlashRoutine());
+        }
 
-        currentHealth -= amount;
-        OnDamaged();
-
-        if (currentHealth <= 0)
-            Die();
+        healthSystem.TakeDamage(amount);
     }
 
     protected virtual void OnDamaged()
@@ -42,21 +53,6 @@ public abstract class EnemyBase : MonoBehaviour
     {
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        TryDamagePlayer(collision.gameObject);
-    }
-
-    void OnCollisionStay2D(Collision2D collision)
-    {
-        TryDamagePlayer(collision.gameObject);
-    }
-
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        TryDamagePlayer(other.gameObject);
-    }
-
     void OnTriggerStay2D(Collider2D other)
     {
         TryDamagePlayer(other.gameObject);
@@ -67,8 +63,8 @@ public abstract class EnemyBase : MonoBehaviour
         if (!target.CompareTag("Player"))
             return;
 
-        HealthSystem health = target.GetComponent<HealthSystem>();
-        if (health != null)
-            health.TakeDamage(contactDamage);
+        HealthSystem playerHealth = target.GetComponent<HealthSystem>();
+        if (playerHealth != null)
+            playerHealth.TakeDamage(contactDamage);
     }
 }

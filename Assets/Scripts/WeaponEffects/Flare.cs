@@ -7,6 +7,8 @@ public class Flare : MonoBehaviour
     public float speed = 10f;
     private Vector2 direction;
 
+    [SerializeField] private Collider2D flareCollider;
+    [SerializeField] private Collider2D damageCollider;
     private LightningOrb orb;
     private Light2D light;
     private Rigidbody2D rb;
@@ -22,6 +24,28 @@ public class Flare : MonoBehaviour
     {
         orb = GetComponent<LightningOrb>();
         light = GetComponent<Light2D>();
+    }
+
+    void OnTriggerStay2D(Collider2D other)
+    {
+        // Try to hit an enemy
+        EnemyBase enemy = other.GetComponent<EnemyBase>();
+        if (enemy != null)
+        {
+            enemy.TakeDamage(1);
+            return;
+        }
+
+        // Try to hit a door
+        Door door = other.GetComponent<Door>();
+        if (door != null)
+        {
+            door.TakeHit();
+            //AudioManager.Instance.PlayHit();
+            Destroy(gameObject);
+            return;
+        }
+
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -41,7 +65,7 @@ public class Flare : MonoBehaviour
         // when hit another object, reparent to that object and stop moving, then start pulsing
         rb.gravityScale = 0;
         rb.linearVelocity = Vector2.zero;
-        GetComponent<Collider2D>().enabled = false;
+        flareCollider.enabled = false;
         transform.SetParent(newParent.transform);
         rb.bodyType = RigidbodyType2D.Kinematic;
         transform.localRotation = Quaternion.identity;
@@ -59,6 +83,7 @@ public class Flare : MonoBehaviour
         yield return new WaitForSeconds(1f);
         orb.Activate();
         light.enabled = true;
+        damageCollider.enabled = true;
         yield return new WaitForSeconds(15f);
 
         Destroy(gameObject);

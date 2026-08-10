@@ -44,11 +44,20 @@ public class PlayerController : MonoBehaviour
     private bool isInvincible = false;
     private float stunDuration = .75f;
     private float invincibleDuration = 2f;
+
+    private SpriteRenderer spriteRenderer;
+    public float flickerInterval = 0.1f;
+
     [SerializeField] private int fuel = 300;
 
     [SerializeField] private LightningBeam lightningBeam;
 
-    void Awake() => rb = GetComponent<Rigidbody2D>();
+
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        rb = GetComponent<Rigidbody2D>();
+    }
 
     // ?? Input System callbacks (wire these up in the Player Input component) ??
     // Set the Player Input component's Behavior to "Send Messages" and it will
@@ -98,12 +107,26 @@ public class PlayerController : MonoBehaviour
         jetpackHeld = value.isPressed;
     }
 
-    public void OnTriggerEnter2D(Collider2D collision)
+    public void OnTriggerStay2D(Collider2D collision)
     {
         // for now, assume any trigger is an enemy
         if (!isInvincible)
             StartCoroutine(ApplyStunAndKnockback((transform.position - collision.transform.position).normalized, 5f));
         // TODO: change 2nd parameter (knockbackForce) based on enemy type
+    }
+
+    private IEnumerator InvincibilityFlicker()
+    {
+        float timer = 0f;
+
+        while (timer < invincibleDuration)
+        {
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+            timer += flickerInterval;
+            yield return new WaitForSeconds(flickerInterval);
+        }
+
+        spriteRenderer.enabled = true; // make sure it ends visible
     }
 
     private IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
@@ -112,6 +135,7 @@ public class PlayerController : MonoBehaviour
         isInvincible = true;
         rb.linearVelocity = direction * knockbackForce;
 
+        StartCoroutine(InvincibilityFlicker());
         yield return new WaitForSeconds(stunDuration);
         isStunned = false;
 

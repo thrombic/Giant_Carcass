@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9073893483586569549}
   - component: {fileID: 2671170303709063217}
   - component: {fileID: 378378559170685443}
+  - component: {fileID: 7415895403159467329}
   - component: {fileID: 6015685465593700208}
   - component: {fileID: 9105213021763581178}
   - component: {fileID: -4920354254809713988}
@@ -132,6 +133,42 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
+--- !u!58 &7415895403159467329
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5942979022005339880}
+  m_Enabled: 0
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 0.75
 --- !u!114 &6015685465593700208
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,6 +182,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flare
   speed: 10
+  flareCollider: {fileID: 378378559170685443}
+  damageCollider: {fileID: 7415895403159467329}
 --- !u!114 &9105213021763581178
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -3,10 +3,11 @@ using UnityEngine;
 public class HealthSystem : MonoBehaviour
 {
     [Header("Health")]
-    public int maxHealth = 5;
+    public int maxHealth = 20;
     public float invulnerabilitySeconds = 0.5f;
 
     public int CurrentHealth { get; private set; }
+    public bool IsInvulnerable => invulnerabilityTimer > 0f;
 
     private float invulnerabilityTimer;
 
