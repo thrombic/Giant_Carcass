@@ -5943,13 +5943,45 @@ GameObject:
   - component: {fileID: 1730561510}
   - component: {fileID: 1730561512}
   - component: {fileID: 1730561511}
+  - component: {fileID: 1730561513}
+  - component: {fileID: 1730561514}
   m_Layer: 7
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1730561513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730561503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 744c4b3ba87c1ec4089f1f17abbc72af, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HealthSystem
+  maxHealth: 5
+  invulnerabilitySeconds: 0.5
+--- !u!114 &1730561514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1730561503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4f48c8510474bc89a186824be7737ef, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDamageReceiver
+  animator: {fileID: 0}
+  hazardResetTrigger: HazardReset
+  hazardResetSprite: {fileID: 0}
+  hazardResetTint: {r: 1, g: 0.45, b: 0.15, a: 1}
 --- !u!50 &1730561504
 Rigidbody2D:
   serializedVersion: 5

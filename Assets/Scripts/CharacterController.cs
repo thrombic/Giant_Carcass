@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.Rendering.DebugUI;
 
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(HealthSystem), typeof(PlayerDamageReceiver))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -35,10 +35,21 @@ public class PlayerController : MonoBehaviour
     private bool aimHeld;
     private bool jetpackHeld;
     [SerializeField] private int fuel = 300;
+    private bool controlsEnabled = true;
 
     [SerializeField] private LightningBeam lightningBeam;
 
-    void Awake() => rb = GetComponent<Rigidbody2D>();
+    public bool ControlsEnabled => controlsEnabled;
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+
+        if (GetComponent<HealthSystem>() == null)
+            gameObject.AddComponent<HealthSystem>();
+
+        if (GetComponent<PlayerDamageReceiver>() == null)
+            gameObject.AddComponent<PlayerDamageReceiver>();
+    }
 
     // ?? Input System callbacks (wire these up in the Player Input component) ??
     // Set the Player Input component's Behavior to "Send Messages" and it will
@@ -47,26 +58,26 @@ public class PlayerController : MonoBehaviour
     /// <summary>Called by PlayerInput when the Move action fires.</summary>
     public void OnMove(InputValue value)
     {
-        moveInput = value.Get<Vector2>();
+        moveInput = controlsEnabled ? value.Get<Vector2>() : Vector2.zero;
     }
 
     /// <summary>Called by PlayerInput when the Jump action fires.</summary>
     public void OnJump(InputValue value)
     {
         // GetButtonDown equivalent: only flag true on the press phase
-        jumpHeld = value.isPressed;
+        jumpHeld = controlsEnabled && value.isPressed;
     }
 
     /// <summary>Called by PlayerInput when the Fire action fires.</summary>
     public void OnFire(InputValue value)
     {
         // GetButton equivalent: track held state
-        firePressed = value.isPressed;
+        firePressed = controlsEnabled && value.isPressed;
     }
 
     public void OnAim(InputValue value)
     {
-        aimHeld = value.isPressed;
+        aimHeld = controlsEnabled && value.isPressed;
     }
 
     public void OnLook(InputValue value)
@@ -80,11 +91,14 @@ public class PlayerController : MonoBehaviour
     }
     public void OnJetpack(InputValue value)
     {
-        jetpackHeld = value.isPressed;
+        jetpackHeld = controlsEnabled && value.isPressed;
     }
 
     void FixedUpdate()
     {
+        if (!controlsEnabled)
+            return;
+
         HandleAim();
         HandleMovement();
         HandleJetpack();
@@ -95,6 +109,26 @@ public class PlayerController : MonoBehaviour
 
         // Reset the one-frame jump flag after it has been consumed
         firePressed = false;
+    }
+
+    public void SetControlsEnabled(bool enabled)
+    {
+        controlsEnabled = enabled;
+
+        if (enabled)
+            return;
+
+        moveInput = Vector2.zero;
+        jumpHeld = false;
+        firePressed = false;
+        aimHeld = false;
+        jetpackHeld = false;
+
+        if (jets != null)
+            jets.SetActive(false);
+
+        if (lightningBeam != null)
+            lightningBeam.StopFiring();
     }
 
     void HandleJetpack()

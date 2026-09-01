@@ -5,6 +5,7 @@ public abstract class EnemyBase : MonoBehaviour
     [Header("Stats")]
     public int maxHealth = 3;
     public int contactDamage = 1;
+    public float contactKnockback = 7f;
     public bool isInvulnerable = false;
 
     protected int currentHealth;
@@ -64,10 +65,15 @@ public abstract class EnemyBase : MonoBehaviour
 
     void TryDamagePlayer(GameObject target)
     {
-        if (!target.CompareTag("Player"))
+        PlayerDamageReceiver receiver = target.GetComponentInParent<PlayerDamageReceiver>();
+        if (receiver != null)
+        {
+            Vector2 direction = receiver.transform.position - transform.position;
+            receiver.TryTakeContactDamage(contactDamage, direction, contactKnockback);
             return;
+        }
 
-        HealthSystem health = target.GetComponent<HealthSystem>();
+        HealthSystem health = target.GetComponentInParent<HealthSystem>();
         if (health != null)
             health.TakeDamage(contactDamage);
     }

@@ -6,13 +6,16 @@ public class HealthSystem : MonoBehaviour
     public int maxHealth = 5;
     public float invulnerabilitySeconds = 0.5f;
 
-    public int CurrentHealth { get; private set; }
+    [SerializeField] private int currentHealth;
+
+    public int CurrentHealth => currentHealth;
+    public bool IsInvulnerable => invulnerabilityTimer > 0f;
 
     private float invulnerabilityTimer;
 
     void Awake()
     {
-        CurrentHealth = maxHealth;
+        currentHealth = maxHealth;
     }
 
     void Update()
@@ -23,22 +26,34 @@ public class HealthSystem : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        if (amount <= 0 || invulnerabilityTimer > 0f || CurrentHealth <= 0)
-            return;
+        TryTakeDamage(amount);
+    }
 
-        CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+    public bool TryTakeDamage(int amount)
+    {
+        if (amount <= 0 || invulnerabilityTimer > 0f || currentHealth <= 0)
+            return false;
+
+        currentHealth = Mathf.Max(0, currentHealth - amount);
         invulnerabilityTimer = invulnerabilitySeconds;
 
-        if (CurrentHealth == 0)
+        if (currentHealth == 0)
             Die();
+
+        return true;
+    }
+
+    public void GrantInvulnerability(float seconds)
+    {
+        invulnerabilityTimer = Mathf.Max(invulnerabilityTimer, Mathf.Max(0f, seconds));
     }
 
     public void Heal(int amount)
     {
-        if (amount <= 0 || CurrentHealth <= 0)
+        if (amount <= 0 || currentHealth <= 0)
             return;
 
-        CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
     }
 
     void Die()
