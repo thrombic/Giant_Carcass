@@ -23,10 +23,21 @@ public class PlayerController : MonoBehaviour
     public float groundCheckDistance = 0.1f;
     public LayerMask groundLayer;
 
+    [Header("Slope Handling")]
+    [Tooltip("Max angle (degrees) considered walkable ground vs. a wall.")]
+    public float maxSlopeAngle = 60f;
+    [Tooltip("Extra downward push while grounded on a slope, keeps the player from bouncing on descents.")]
+    public float slopeStickForce = 8f;
+
     private Rigidbody2D rb;
     private bool isGrounded;
     private float fireCooldown;
     private bool facingLeft = true;
+
+    // Slope state, updated each ground check in HandleJump()
+    private Vector2 groundNormal = Vector2.up;
+    private float currentSlopeAngle;
+    private bool onSlope;
 
     // ?? New Input System: cached input values read from callbacks ??
     [SerializeField] private GameObject flashlight;
@@ -148,6 +159,7 @@ public class PlayerController : MonoBehaviour
         if (isStunned) return;
 
         HandleAim();
+        HandleGroundAndSlope();
         HandleMovement();
         HandleJetpack();
         HandleJump();
@@ -159,6 +171,41 @@ public class PlayerController : MonoBehaviour
         // Reset the one-frame jump flag after it has been consumed
         firePressed = false;
         flarePressed = false;
+    }
+
+    /// Casts the same left/right ground rays used for isGrounded, but also
+    /// reads the surface normal so movement/jumping can account for slopes.
+    /// Runs once per FixedUpdate, before movement and jump logic use the result.
+    /// </summary>
+    void HandleGroundAndSlope()
+    {
+        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(.75f, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
+        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(.75f, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
+
+        bool hitAny = hitLeft.collider != null || hitRight.collider != null;
+
+        if (hitAny)
+        {
+            // Prefer the closer hit's normal; if both hit, average them for a
+            // smoother result across tile/curve boundaries.
+            Vector2 normal;
+            if (hitLeft.collider != null && hitRight.collider != null)
+                normal = (hitLeft.normal + hitRight.normal).normalized;
+            else
+                normal = hitLeft.collider != null ? hitLeft.normal : hitRight.normal;
+
+            groundNormal = normal;
+            currentSlopeAngle = Vector2.Angle(groundNormal, Vector2.up);
+            isGrounded = currentSlopeAngle <= maxSlopeAngle;
+            onSlope = isGrounded && currentSlopeAngle > 0.1f;
+        }
+        else
+        {
+            isGrounded = false;
+            onSlope = false;
+            groundNormal = Vector2.up;
+            currentSlopeAngle = 0f;
+        }
     }
 
     void HandleJetpack()
@@ -197,19 +244,47 @@ public class PlayerController : MonoBehaviour
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
         if (!aimHeld && moveInput.x != 0)
         {
-            rb.linearVelocityX += moveInput.x;
-            if (jetpackHeld)
-                rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed * 2, moveSpeed * 2);
+            if (isGrounded && onSlope)
+            {
+                // Redirect horizontal input along the slope surface so the
+                // player accelerates parallel to the ground instead of
+                // straight sideways, which would fight the collider on
+                // steeper curves/ramps.
+                Vector2 slopeDir = new Vector2(groundNormal.y, -groundNormal.x);
+                Vector2 alongSlope = slopeDir * moveInput.x;
+
+                rb.linearVelocityX += alongSlope.x;
+                rb.linearVelocityY += alongSlope.y;
+
+                float maxSpeed = jetpackHeld ? moveSpeed * 2 : moveSpeed;
+                Vector2 horizPlane = new Vector2(rb.linearVelocityX, 0f);
+                if (Mathf.Abs(rb.linearVelocityX) > maxSpeed)
+                    rb.linearVelocityX = Mathf.Sign(rb.linearVelocityX) * maxSpeed;
+            }
             else
-                rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
+            {
+                rb.linearVelocityX += moveInput.x;
+                if (jetpackHeld)
+                    rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed * 2, moveSpeed * 2);
+                else
+                    rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
+            }
         }
         else if (isGrounded)
         {
             rb.linearVelocityX *= 0.8f; // simple friction when no input
+            rb.linearVelocityY *= 0.8f;
             fuel += 10;
             if (fuel > 300) fuel = 300;
         }
         //rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
+
+        // Keep the player stuck to descending slopes instead of momentarily
+        // going airborne over convex bumps.
+        if (isGrounded && onSlope && rb.linearVelocity.y <= 0f)
+        {
+            rb.linearVelocityY -= slopeStickForce * Time.fixedDeltaTime;
+        }
 
         if (moveInput.x > 0 && facingLeft) Flip();
         else if (moveInput.x < 0 && !facingLeft) Flip();
@@ -231,14 +306,18 @@ public class PlayerController : MonoBehaviour
 
     void HandleJump()
     {
-        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(1, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
-        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(1, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
-        isGrounded = (hitLeft.collider != null || hitRight.collider != null) ? true : false;
+        // Ground/slope state is now computed once per frame in HandleGroundAndSlope(),
+        // called earlier in FixedUpdate, so isGrounded is already up to date here.
 
         if (jumpHeld && isGrounded)
         {
             jumpPeaked = false;
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+
+            // Blend jump direction toward the ground normal so jumping off a
+            // slope gives a natural push instead of always firing straight up.
+            Vector2 jumpDir = onSlope ? Vector2.Lerp(Vector2.up, groundNormal, 0.5f).normalized : Vector2.up;
+            Vector2 launchVelocity = jumpDir * jumpForce;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x + launchVelocity.x, launchVelocity.y);
             //AudioManager.Instance.PlayJump();
         }
         if (!jumpPeaked)
