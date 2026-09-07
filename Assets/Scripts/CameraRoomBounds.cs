@@ -4,6 +4,7 @@ public class CameraRoomBounds : MonoBehaviour
 {
     public Vector2 roomSize = new Vector2(32f, 18f);
     public Vector2 roomOffset;
+    public Transform respawnPoint;
     public Color gizmoColor = new Color(0.25f, 0.8f, 1f, 0.35f);
 
     public Bounds WorldBounds
@@ -19,6 +20,11 @@ public class CameraRoomBounds : MonoBehaviour
     public bool Contains(Vector2 worldPosition)
     {
         return WorldBounds.Contains(new Vector3(worldPosition.x, worldPosition.y, WorldBounds.center.z));
+    }
+
+    public Vector3 GetRespawnPosition(Vector3 fallbackPosition)
+    {
+        return respawnPoint != null ? respawnPoint.position : fallbackPosition;
     }
 
     public Vector3 ClampCameraPosition(Vector3 desiredPosition, Camera cameraToClamp)

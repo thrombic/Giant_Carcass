@@ -28,6 +28,11 @@ public class CameraFollow : MonoBehaviour
         MoveToTarget(1f - Mathf.Exp(-smoothSpeed * Time.deltaTime));
     }
 
+    public void SnapToTarget()
+    {
+        MoveToTarget(1f);
+    }
+
     void MoveToTarget(float followAmount)
     {
         if (target == null)

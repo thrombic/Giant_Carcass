@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 using static UnityEngine.Rendering.DebugUI;
 using static UnityEngine.UI.Image;
 
-[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(HealthSystem), typeof(PlayerDamageReceiver))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -62,12 +62,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int fuel = 300;
 
     [SerializeField] private LightningBeam lightningBeam;
-
-
+    
+    private bool controlsEnabled = true;
+    public bool ControlsEnabled => controlsEnabled;
+    
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+
+        if (GetComponent<HealthSystem>() == null)
+            gameObject.AddComponent<HealthSystem>();
+
+        if (GetComponent<PlayerDamageReceiver>() == null)
+            gameObject.AddComponent<PlayerDamageReceiver>();
     }
 
     // ?? Input System callbacks (wire these up in the Player Input component) ??
@@ -77,14 +85,14 @@ public class PlayerController : MonoBehaviour
     /// <summary>Called by PlayerInput when the Move action fires.</summary>
     public void OnMove(InputValue value)
     {
-        moveInput = value.Get<Vector2>();
+        moveInput = !isStunned ? value.Get<Vector2>() : Vector2.zero;
     }
 
     /// <summary>Called by PlayerInput when the Jump action fires.</summary>
     public void OnJump(InputValue value)
     {
         // GetButtonDown equivalent: only flag true on the press phase
-        jumpHeld = value.isPressed;
+        jumpHeld = !isStunned && value.isPressed;
     }
 
     public void OnFlare(InputValue value)
@@ -96,12 +104,12 @@ public class PlayerController : MonoBehaviour
     public void OnFire(InputValue value)
     {
         // GetButton equivalent: track held state
-        firePressed = value.isPressed;
+        firePressed = !isStunned && value.isPressed;
     }
 
     public void OnAim(InputValue value)
     {
-        aimHeld = value.isPressed;
+        aimHeld = !isStunned && value.isPressed;
     }
 
     public void OnLook(InputValue value)
@@ -113,6 +121,7 @@ public class PlayerController : MonoBehaviour
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
         flashlight.transform.rotation = Quaternion.Euler(0, 0, angle - 90);*/
     }
+
     public void OnJetpack(InputValue value)
     {
         jetpackHeld = value.isPressed;
@@ -160,6 +169,7 @@ public class PlayerController : MonoBehaviour
 
         HandleAim();
         HandleGroundAndSlope();
+
         HandleMovement();
         HandleJetpack();
         HandleJump();
@@ -206,6 +216,26 @@ public class PlayerController : MonoBehaviour
             groundNormal = Vector2.up;
             currentSlopeAngle = 0f;
         }
+    }
+
+    public void SetControlsEnabled(bool enabled)
+    {
+        controlsEnabled = enabled;
+
+        if (enabled)
+            return;
+
+        moveInput = Vector2.zero;
+        jumpHeld = false;
+        firePressed = false;
+        aimHeld = false;
+        jetpackHeld = false;
+
+        if (jets != null)
+            jets.SetActive(false);
+
+        if (lightningBeam != null)
+            lightningBeam.StopFiring();
     }
 
     void HandleJetpack()
@@ -257,7 +287,7 @@ public class PlayerController : MonoBehaviour
                 rb.linearVelocityY += alongSlope.y;
 
                 float maxSpeed = jetpackHeld ? moveSpeed * 2 : moveSpeed;
-                Vector2 horizPlane = new Vector2(rb.linearVelocityX, 0f);
+                //Vector2 horizPlane = new Vector2(rb.linearVelocityX, 0f);
                 if (Mathf.Abs(rb.linearVelocityX) > maxSpeed)
                     rb.linearVelocityX = Mathf.Sign(rb.linearVelocityX) * maxSpeed;
             }

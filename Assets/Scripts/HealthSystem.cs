@@ -7,6 +7,7 @@ public class HealthSystem : MonoBehaviour
     public float invulnerabilitySeconds = 0.5f;
 
     public int CurrentHealth { get; private set; }
+
     public bool IsInvulnerable => invulnerabilityTimer > 0f;
 
     private float invulnerabilityTimer;
@@ -24,14 +25,26 @@ public class HealthSystem : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
+        TryTakeDamage(amount);
+    }
+
+    public bool TryTakeDamage(int amount)
+    {
         if (amount <= 0 || invulnerabilityTimer > 0f || CurrentHealth <= 0)
-            return;
+            return false;
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
         invulnerabilityTimer = invulnerabilitySeconds;
 
         if (CurrentHealth == 0)
             Die();
+
+        return true;
+    }
+
+    public void GrantInvulnerability(float seconds)
+    {
+        invulnerabilityTimer = Mathf.Max(invulnerabilityTimer, Mathf.Max(0f, seconds));
     }
 
     public void Heal(int amount)
