@@ -59,6 +59,7 @@ public class PlayerDamageReceiver : MonoBehaviour
 
     private IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
     {
+        controller.SetControlsEnabled(false);
         controller.isStunned = true;
         isInvincible = true;
         rb.linearVelocity = direction * knockbackForce;
@@ -66,6 +67,7 @@ public class PlayerDamageReceiver : MonoBehaviour
         StartCoroutine(InvincibilityFlicker());
         yield return new WaitForSeconds(stunDuration);
         controller.isStunned = false;
+        controller.SetControlsEnabled(true);
 
         yield return new WaitForSeconds(invincibleDuration - stunDuration);
         isInvincible = false;

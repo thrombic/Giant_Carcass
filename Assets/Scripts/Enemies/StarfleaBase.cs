@@ -29,7 +29,6 @@ public class StarfleaBase : EnemyBase
     protected bool isStopped;
 
     private bool isAttachedToSurface;
-    private SpriteRenderer spriteRenderer;
     private Collider2D ownCollider;
     private Vector3 baseScale;
     private float animationTimer;

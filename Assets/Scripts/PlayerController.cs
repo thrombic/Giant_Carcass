@@ -2,6 +2,7 @@ using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 using static UnityEngine.Rendering.DebugUI;
 using static UnityEngine.UI.Image;
 
@@ -29,15 +30,23 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Extra downward push while grounded on a slope, keeps the player from bouncing on descents.")]
     public float slopeStickForce = 8f;
 
-    private Rigidbody2D rb;
-    private bool isGrounded;
-    private float fireCooldown;
-    private bool facingLeft = true;
+    // Raycast-based grounding (fast, predictive, decides isGrounded)
+    private Vector2 raycastNormal = Vector2.up;
+
+    private ContactPoint2D[] contactBuffer = new ContactPoint2D[8];
+    private Vector2 contactNormal = Vector2.up;
+    private bool hasFreshContact = false;
+    private int framesSinceLastContact = 0;
 
     // Slope state, updated each ground check in HandleJump()
     private Vector2 groundNormal = Vector2.up;
     private float currentSlopeAngle;
+    private bool isGrounded;
     private bool onSlope;
+
+    private Rigidbody2D rb;
+    private float fireCooldown;
+    private bool facingLeft = true;
 
     // ?? New Input System: cached input values read from callbacks ??
     [SerializeField] private GameObject flashlight;
@@ -73,6 +82,37 @@ public class PlayerController : MonoBehaviour
 
         if (GetComponent<PlayerDamageReceiver>() == null)
             gameObject.AddComponent<PlayerDamageReceiver>();
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (((1 << collision.gameObject.layer) & groundLayer) == 0)
+            return;
+
+        int count = collision.GetContacts(contactBuffer);
+        float bestDot = -1f;
+        Vector2 bestNormal = Vector2.zero;
+        bool found = false;
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 normal = contactBuffer[i].normal;
+            float dot = Vector2.Dot(normal, Vector2.up);
+
+            // Ignore contacts that are basically walls (near-horizontal normal)
+            if (dot > bestDot && dot > 0.1f)
+            {
+                bestDot = dot;
+                bestNormal = normal;
+                found = true;
+            }
+        }
+
+        if (found)
+        {
+            contactNormal = bestNormal;
+            framesSinceLastContact = 0;
+        }
     }
 
     // ?? Input System callbacks (wire these up in the Player Input component) ??
@@ -153,8 +193,10 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     void HandleGroundAndSlope()
     {
-        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(.75f, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
-        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(.75f, 0, 0), Vector2.down, groundCheckDistance, groundLayer);
+        float dynamicCheckDistance = groundCheckDistance + Mathf.Abs(rb.linearVelocity.x) * Time.fixedDeltaTime;
+
+        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(.75f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer); // TODO: change this to use collider bounds
+        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(.75f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer);
 
         bool hitAny = hitLeft.collider != null || hitRight.collider != null;
 
@@ -168,32 +210,49 @@ public class PlayerController : MonoBehaviour
             else
                 normal = hitLeft.collider != null ? hitLeft.normal : hitRight.normal;
 
-            groundNormal = normal;
-            currentSlopeAngle = Vector2.Angle(groundNormal, Vector2.up);
-            isGrounded = currentSlopeAngle <= maxSlopeAngle;
-            onSlope = isGrounded && currentSlopeAngle > 0.1f;
+            raycastNormal = normal;
+            float raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
+            isGrounded = raycastAngle <= maxSlopeAngle;
         }
         else
         {
             isGrounded = false;
-            onSlope = false;
-            groundNormal = Vector2.up;
-            currentSlopeAngle = 0f;
         }
+
+        // --- Pick which normal to trust ---
+        // Contacts are more accurate but a frame stale; only trust them if they
+        // arrived recently (last 1-2 physics steps) so a contact from an old
+        // collision doesn't linger after the player has left the ground.
+        if (isGrounded && hasFreshContact && framesSinceLastContact <= 1)
+        {
+            groundNormal = contactNormal;
+        }
+        else if (isGrounded)
+        {
+            groundNormal = raycastNormal;
+        }
+        else
+        {
+            groundNormal = Vector2.up;
+        }
+
+        currentSlopeAngle = isGrounded ? Vector2.Angle(groundNormal, Vector2.up) : 0f;
+        onSlope = isGrounded && currentSlopeAngle > 2f;
+
+        // Age out the contact data; OnCollisionStay2D will refresh this to 0
+        // if we're still actually touching something this physics step.
+        framesSinceLastContact++;
+        hasFreshContact = framesSinceLastContact <= 1;
     }
 
     public void SetControlsEnabled(bool enabled)
     {
-        print("controls set to: " + enabled);
-
         controlsEnabled = enabled;
 
         if (enabled)
             return;
 
-        moveInput = Vector2.zero;
         jumpHeld = false;
-        firePressed = false;
         aimHeld = false;
         jetpackHeld = false;
 
@@ -240,6 +299,8 @@ public class PlayerController : MonoBehaviour
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
         if (!aimHeld && moveInput.x != 0)
         {
+            float maxSpeed = (jetpackHeld && fuel > 0) ? moveSpeed * 2 : moveSpeed;
+
             if (isGrounded && onSlope)
             {
                 // Redirect horizontal input along the slope surface so the
@@ -249,37 +310,32 @@ public class PlayerController : MonoBehaviour
                 Vector2 slopeDir = new Vector2(groundNormal.y, -groundNormal.x);
                 Vector2 alongSlope = slopeDir * moveInput.x;
 
-                rb.linearVelocityX += alongSlope.x;
-                rb.linearVelocityY += alongSlope.y;
+                rb.linearVelocity = alongSlope * maxSpeed;
 
-                float maxSpeed = jetpackHeld ? moveSpeed * 2 : moveSpeed;
-                //Vector2 horizPlane = new Vector2(rb.linearVelocityX, 0f);
-                if (Mathf.Abs(rb.linearVelocityX) > maxSpeed)
-                    rb.linearVelocityX = Mathf.Sign(rb.linearVelocityX) * maxSpeed;
+                // Keep the player stuck to descending slopes instead of momentarily
+                // going airborne over convex bumps.
+                if (rb.linearVelocity.y <= 0f)
+                    rb.linearVelocityY -= slopeStickForce * Time.fixedDeltaTime;
+
             }
             else
             {
                 rb.linearVelocityX += moveInput.x;
-                if (jetpackHeld)
-                    rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed * 2, moveSpeed * 2);
-                else
-                    rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -moveSpeed, moveSpeed);
+                rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -maxSpeed, maxSpeed);
             }
         }
         else if (isGrounded)
         {
             rb.linearVelocityX *= 0.8f; // simple friction when no input
             rb.linearVelocityY *= 0.8f;
-            fuel += 10;
+            fuel += 5;
             if (fuel > 300) fuel = 300;
         }
-        //rb.linearVelocity = new Vector2(moveInput.x * moveSpeed, rb.linearVelocity.y);
 
-        // Keep the player stuck to descending slopes instead of momentarily
-        // going airborne over convex bumps.
-        if (isGrounded && onSlope && rb.linearVelocity.y <= 0f)
+        if (isGrounded && !onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
         {
-            rb.linearVelocityY -= slopeStickForce * Time.fixedDeltaTime;
+            print(rb.linearVelocity);
+            rb.linearVelocityY = 0;
         }
 
         if (moveInput.x > 0 && facingLeft) Flip();
@@ -322,7 +378,7 @@ public class PlayerController : MonoBehaviour
         {
             if (!jumpHeld && rb.linearVelocity.y > 0)
             {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+                rb.linearVelocityY = 0;
                 jumpPeaked = true;
             }
         }
