@@ -18,6 +18,11 @@ public class PlayerDamageReceiver : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Vector3 startingPosition;
 
+    private bool isInvincible = false;
+    private float stunDuration = .75f;
+    private float invincibleDuration = 2f;
+    private float flickerInterval = 0.1f;
+
     void Awake()
     {
         health = GetComponent<HealthSystem>();
@@ -30,9 +35,45 @@ public class PlayerDamageReceiver : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
     }
 
+    public void OnTriggerStay2D(Collider2D collision)
+    {
+        // for now, assume any trigger is an enemy
+        if (!isInvincible)
+            StartCoroutine(ApplyStunAndKnockback((transform.position - collision.transform.position).normalized, 5f));
+        // TODO: change 2nd parameter (knockbackForce) based on enemy type
+    }
+
+    private IEnumerator InvincibilityFlicker()
+    {
+        float timer = 0f;
+
+        while (timer < invincibleDuration)
+        {
+            spriteRenderer.enabled = !spriteRenderer.enabled;
+            timer += flickerInterval;
+            yield return new WaitForSeconds(flickerInterval);
+        }
+
+        spriteRenderer.enabled = true; // make sure it ends visible
+    }
+
+    private IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
+    {
+        controller.isStunned = true;
+        isInvincible = true;
+        rb.linearVelocity = direction * knockbackForce;
+
+        StartCoroutine(InvincibilityFlicker());
+        yield return new WaitForSeconds(stunDuration);
+        controller.isStunned = false;
+
+        yield return new WaitForSeconds(invincibleDuration - stunDuration);
+        isInvincible = false;
+    }
+
     public bool TryTakeContactDamage(int damage, Vector2 knockbackDirection, float knockbackSpeed)
     {
-        if (IsResetting || !health.TryTakeDamage(damage))
+        if (IsResetting)  //|| !health.TryTakeDamage(damage)
             return false;
 
         if (knockbackDirection.sqrMagnitude < 0.0001f)

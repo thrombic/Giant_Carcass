@@ -44,6 +44,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject jets;
 
     private Vector2 moveInput;
+    private bool jumpPressed;
     private bool jumpHeld;
     private bool jumpPeaked;
     private bool flarePressed;
@@ -51,13 +52,9 @@ public class PlayerController : MonoBehaviour
     private bool aimHeld;
     private bool jetpackHeld;
 
-    private bool isStunned = false;
-    private bool isInvincible = false;
-    private float stunDuration = .75f;
-    private float invincibleDuration = 2f;
+    public bool isStunned = false;
 
     private SpriteRenderer spriteRenderer;
-    public float flickerInterval = 0.1f;
 
     [SerializeField] private int fuel = 300;
 
@@ -85,19 +82,19 @@ public class PlayerController : MonoBehaviour
     /// <summary>Called by PlayerInput when the Move action fires.</summary>
     public void OnMove(InputValue value)
     {
-        moveInput = !isStunned ? value.Get<Vector2>() : Vector2.zero;
+        moveInput = value.Get<Vector2>();
     }
 
     /// <summary>Called by PlayerInput when the Jump action fires.</summary>
     public void OnJump(InputValue value)
     {
         // GetButtonDown equivalent: only flag true on the press phase
-        jumpHeld = !isStunned && value.isPressed;
+        jumpPressed = jumpHeld = !isStunned && value.isPressed;
     }
 
     public void OnFlare(InputValue value)
     {
-        flarePressed = value.isPressed;
+        flarePressed = !isStunned && value.isPressed;
     }
 
     /// <summary>Called by PlayerInput when the Fire action fires.</summary>
@@ -124,53 +121,19 @@ public class PlayerController : MonoBehaviour
 
     public void OnJetpack(InputValue value)
     {
-        jetpackHeld = value.isPressed;
-    }
-
-    public void OnTriggerStay2D(Collider2D collision)
-    {
-        // for now, assume any trigger is an enemy
-        if (!isInvincible)
-            StartCoroutine(ApplyStunAndKnockback((transform.position - collision.transform.position).normalized, 5f));
-        // TODO: change 2nd parameter (knockbackForce) based on enemy type
-    }
-
-    private IEnumerator InvincibilityFlicker()
-    {
-        float timer = 0f;
-
-        while (timer < invincibleDuration)
-        {
-            spriteRenderer.enabled = !spriteRenderer.enabled;
-            timer += flickerInterval;
-            yield return new WaitForSeconds(flickerInterval);
-        }
-
-        spriteRenderer.enabled = true; // make sure it ends visible
-    }
-
-    private IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
-    {
-        isStunned = true;
-        isInvincible = true;
-        rb.linearVelocity = direction * knockbackForce;
-
-        StartCoroutine(InvincibilityFlicker());
-        yield return new WaitForSeconds(stunDuration);
-        isStunned = false;
-
-        yield return new WaitForSeconds(invincibleDuration - stunDuration);
-        isInvincible = false;
+        jetpackHeld = !isStunned && value.isPressed;
     }
 
     void FixedUpdate()
     {
-        if (isStunned) return;
+        //if (isStunned) return;
 
         HandleAim();
         HandleGroundAndSlope();
 
-        HandleMovement();
+        if (!isStunned)
+            HandleMovement();
+
         HandleJetpack();
         HandleJump();
         HandleFlare();
@@ -179,6 +142,7 @@ public class PlayerController : MonoBehaviour
         fireCooldown -= Time.deltaTime;
 
         // Reset the one-frame jump flag after it has been consumed
+        jumpPressed = false;
         firePressed = false;
         flarePressed = false;
     }
@@ -220,6 +184,8 @@ public class PlayerController : MonoBehaviour
 
     public void SetControlsEnabled(bool enabled)
     {
+        print("controls set to: " + enabled);
+
         controlsEnabled = enabled;
 
         if (enabled)
@@ -339,13 +305,15 @@ public class PlayerController : MonoBehaviour
         // Ground/slope state is now computed once per frame in HandleGroundAndSlope(),
         // called earlier in FixedUpdate, so isGrounded is already up to date here.
 
-        if (jumpHeld && isGrounded)
+        // Blend jump direction toward the ground normal so jumping off a
+        // slope gives a natural push instead of always firing straight up.
+        //Vector2 jumpDir = onSlope ? Vector2.Lerp(Vector2.up, groundNormal, 0.5f).normalized : Vector2.up; 
+
+        if (jumpPressed && isGrounded)
         {
             jumpPeaked = false;
 
-            // Blend jump direction toward the ground normal so jumping off a
-            // slope gives a natural push instead of always firing straight up.
-            Vector2 jumpDir = onSlope ? Vector2.Lerp(Vector2.up, groundNormal, 0.5f).normalized : Vector2.up;
+            Vector2 jumpDir = Vector2.up;
             Vector2 launchVelocity = jumpDir * jumpForce;
             rb.linearVelocity = new Vector2(rb.linearVelocity.x + launchVelocity.x, launchVelocity.y);
             //AudioManager.Instance.PlayJump();

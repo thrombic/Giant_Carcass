@@ -25,13 +25,9 @@ public class HealthSystem : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        TryTakeDamage(amount);
-    }
-
-    public bool TryTakeDamage(int amount)
-    {
+        print("Took " + amount + " damage," + "Current health: " + CurrentHealth);
         if (amount <= 0 || invulnerabilityTimer > 0f || CurrentHealth <= 0)
-            return false;
+            return;
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
         invulnerabilityTimer = invulnerabilitySeconds;
@@ -39,7 +35,7 @@ public class HealthSystem : MonoBehaviour
         if (CurrentHealth == 0)
             Die();
 
-        return true;
+        return;
     }
 
     public void GrantInvulnerability(float seconds)
