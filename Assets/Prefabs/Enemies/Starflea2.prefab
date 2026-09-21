@@ -9,10 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1002000000000000002}
-  - component: {fileID: 1002000000000000003}
   - component: {fileID: 1002000000000000004}
   - component: {fileID: 1002000000000000005}
   - component: {fileID: 1002000000000000006}
+  - component: {fileID: 6774190147028243395}
   m_Layer: 9
   m_Name: Starflea2
   m_TagString: Untagged
@@ -35,52 +35,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1002000000000000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1002000000000000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7c84ba5f3e6a2f4bb58cfb494e7846a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Starflea2
-  maxHealth: 3
-  contactDamage: 1
-  isInvulnerable: 0
-  moveSpeed: 1.5
-  bodyRadius: 0.28
-  surfaceLayer:
-    serializedVersion: 2
-    m_Bits: 8
-  startMovingLeft: 0
-  cornerLookAhead: 0.08
-  surfaceSnapDistance: 0.2
-  skinWidth: 0.03
-  airborneGravityScale: 1
-  landingProbeDistance: 0.25
-  fallingSprite: {fileID: 21300000, guid: b07a1af4d280435fb2f47973e8d39e74, type: 3}
-  movementSprites:
-  - {fileID: 21300000, guid: b07a1af4d280435fb2f47973e8d39e74, type: 3}
-  - {fileID: 21300000, guid: 9247d01482d140f6a9ec737bf9933235, type: 3}
-  movementFrameRate: 6
-  flipVisualFacing: 1
-  visualSortingOrder: 5
-  electricDuration: 2
-  autoElectricInterval: 5
-  electricRadius: 2
-  electricDamage: 1
-  electricTickRate: 0.25
-  playerLayer:
-    serializedVersion: 2
-    m_Bits: 128
-  electricAttackSprites:
-  - {fileID: 21300000, guid: cae116f835ab41db8136a18e850d019e, type: 3}
-  - {fileID: 21300000, guid: dacb4a3620b641c08c54a47260e8a834, type: 3}
-  electricFrameRate: 8
-  electricFXPrefab: {fileID: 0}
 --- !u!50 &1002000000000000004
 Rigidbody2D:
   serializedVersion: 5
@@ -104,7 +58,6 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
@@ -204,3 +157,44 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &6774190147028243395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1002000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba42fdf78ffcd294ca0bc97aa753f480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Starflea2
+  contactDamage: 1
+  healthSystem: {fileID: 0}
+  moveSpeed: 1.5
+  bodyRadius: 0.28
+  surfaceLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  startMovingLeft: 0
+  cornerLookAhead: 0.08
+  surfaceSnapDistance: 0.2
+  skinWidth: 0.03
+  airborneGravityScale: 1
+  landingProbeDistance: 0.25
+  fallingSprite: {fileID: 0}
+  movementSprites: []
+  movementFrameRate: 6
+  flipVisualFacing: 1
+  visualSortingOrder: 5
+  electricDuration: 2
+  autoElectricInterval: 5
+  electricRadius: 2
+  electricDamage: 1
+  electricTickRate: 0.25
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  electricAttackSprites: []
+  electricFrameRate: 8
+  electricFXPrefab: {fileID: 0}

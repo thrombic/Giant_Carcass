@@ -315,12 +315,12 @@ public class StarfleaBase : EnemyBase
     void SetAirbornePhysics()
     {
         rb.bodyType = RigidbodyType2D.Dynamic;
-        rb.gravityScale = Mathf.Max(0f, airborneGravityScale);
+        rb.gravityScale = Mathf.Max(0f, airborneGravityScale); // TODO: change this to scale with local gravity
     }
 
     RaycastHit2D CastSurface(Vector2 origin, Vector2 direction, float distance)
     {
-        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, distance, surfaceLayer);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, distance, surfaceLayer); // TODO: check if RaycastAll is necessary, or if Raycast is sufficient
         foreach (RaycastHit2D hit in hits)
         {
             if (hit.collider == null || hit.collider == ownCollider || hit.collider.transform.IsChildOf(transform))

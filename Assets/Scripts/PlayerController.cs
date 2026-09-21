@@ -10,8 +10,9 @@ using static UnityEngine.UI.Image;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed = 6f;
-    public float jumpForce = 12f;
+    public float moveSpeed = 12f;
+    public float jumpForce = 18f;
+    public float jetpackForce = 12.5f;
 
     [Header("Shooting")]
     public GameObject bulletPrefab;
@@ -65,7 +66,8 @@ public class PlayerController : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
 
-    [SerializeField] private int fuel = 300;
+    [SerializeField] private int fuel = 90;
+    [SerializeField] private int maxFuel = 90;
 
     [SerializeField] private LightningBeam lightningBeam;
     
@@ -195,8 +197,8 @@ public class PlayerController : MonoBehaviour
     {
         float dynamicCheckDistance = groundCheckDistance + Mathf.Abs(rb.linearVelocity.x) * Time.fixedDeltaTime;
 
-        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(.75f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer); // TODO: change this to use collider bounds
-        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(.75f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer);
+        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(1.5f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer); // TODO: change this to use collider bounds
+        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(1.5f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer);
 
         bool hitAny = hitLeft.collider != null || hitRight.collider != null;
 
@@ -275,7 +277,7 @@ public class PlayerController : MonoBehaviour
             jets.transform.rotation = Quaternion.Euler(0, 0, angle);
             jets.SetActive(true);
 
-            rb.AddForce(moveInput * 15);
+            rb.AddForce(moveInput * jetpackForce);
             fuel -= 1;
         }
         else
@@ -301,7 +303,7 @@ public class PlayerController : MonoBehaviour
         {
             float maxSpeed = (jetpackHeld && fuel > 0) ? moveSpeed * 2 : moveSpeed;
 
-            if (isGrounded && onSlope)
+            if (isGrounded && onSlope && !jumpHeld)
             {
                 // Redirect horizontal input along the slope surface so the
                 // player accelerates parallel to the ground instead of
@@ -328,13 +330,12 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocityX *= 0.8f; // simple friction when no input
             rb.linearVelocityY *= 0.8f;
-            fuel += 5;
-            if (fuel > 300) fuel = 300;
+            fuel += 5; // TODO: perhaps fuel should regen whenever grounded
+            if (fuel > maxFuel) fuel = maxFuel;
         }
 
         if (isGrounded && !onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
         {
-            print(rb.linearVelocity);
             rb.linearVelocityY = 0;
         }
 
