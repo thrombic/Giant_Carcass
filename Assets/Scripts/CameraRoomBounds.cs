@@ -5,6 +5,7 @@ public class CameraRoomBounds : MonoBehaviour
     public Vector2 roomSize = new Vector2(32f, 18f);
     public Vector2 roomOffset;
     public Transform respawnPoint;
+    public AudioZoneProfile audioZone;
     public Color gizmoColor = new Color(0.25f, 0.8f, 1f, 0.35f);
 
     public Bounds WorldBounds

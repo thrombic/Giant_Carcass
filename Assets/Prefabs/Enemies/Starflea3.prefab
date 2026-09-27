@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1003000000000000004}
   - component: {fileID: 1003000000000000005}
   - component: {fileID: 1003000000000000006}
+  - component: {fileID: 1003000000000000007}
   m_Layer: 9
   m_Name: Starflea3
   m_TagString: Untagged
@@ -68,6 +69,25 @@ MonoBehaviour:
   movementFrameRate: 6
   flipVisualFacing: 1
   visualSortingOrder: 5
+--- !u!114 &1003000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1003000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d94db19cdb614bc9a78846f699319b2c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StarfleaAmbientAudio
+  loopClip: {fileID: 8300000, guid: 0f9514566e684c278436c70b301a39ac, type: 3}
+  quietVolume: 0.12
+  closeVolume: 1
+  proximityBoostEnabled: 1
+  fullVolumeDistanceInPlayerRadii: 5
+  fadeDistanceInPlayerRadii: 3
+  volumeChangePerSecond: 3
 --- !u!50 &1003000000000000004
 Rigidbody2D:
   serializedVersion: 5
