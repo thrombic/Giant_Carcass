@@ -11,6 +11,7 @@ public class PlayerDamageReceiver : MonoBehaviour
     public Color hazardResetTint = new Color(1f, 0.45f, 0.15f, 1f);
 
     public bool IsResetting { get; private set; }
+    public bool IsInvincible => invincibleTimer > 0;
 
     private HealthSystem health;
     private Rigidbody2D rb;
@@ -18,9 +19,9 @@ public class PlayerDamageReceiver : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Vector3 startingPosition;
 
-    private bool isInvincible = false;
     private float stunDuration = .75f;
     private float invincibleDuration = 2f;
+    private float invincibleTimer = 0;
     private float flickerInterval = 0.1f;
 
     void Awake()
@@ -35,33 +36,24 @@ public class PlayerDamageReceiver : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
     }
 
-    public void OnTriggerStay2D(Collider2D collision)
-    {
-        // for now, assume any trigger is an enemy
-        if (!isInvincible)
-            StartCoroutine(ApplyStunAndKnockback((transform.position - collision.transform.position).normalized, 5f));
-        // TODO: change 2nd parameter (knockbackForce) based on enemy type
-    }
-
     private IEnumerator InvincibilityFlicker()
     {
-        float timer = 0f;
+        invincibleTimer = invincibleDuration;
 
-        while (timer < invincibleDuration)
+        while (invincibleTimer > 0)
         {
             spriteRenderer.enabled = !spriteRenderer.enabled;
-            timer += flickerInterval;
+            invincibleTimer -= flickerInterval;
             yield return new WaitForSeconds(flickerInterval);
         }
 
         spriteRenderer.enabled = true; // make sure it ends visible
     }
 
-    private IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
+    public IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)
     {
         controller.SetControlsEnabled(false);
         controller.isStunned = true;
-        isInvincible = true;
         rb.linearVelocity = direction * knockbackForce;
 
         StartCoroutine(InvincibilityFlicker());
@@ -70,7 +62,6 @@ public class PlayerDamageReceiver : MonoBehaviour
         controller.SetControlsEnabled(true);
 
         yield return new WaitForSeconds(invincibleDuration - stunDuration);
-        isInvincible = false;
     }
 
     public bool TryTakeContactDamage(int damage, Vector2 knockbackDirection, float knockbackSpeed)

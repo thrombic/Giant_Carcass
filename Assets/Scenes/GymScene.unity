@@ -5458,10 +5458,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1002000000000000003, guid: c082777a6502448aa710bf2bb48229c9, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1002000000000000001, guid: c082777a6502448aa710bf2bb48229c9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1923962481}
   m_SourcePrefab: {fileID: 100100000, guid: c082777a6502448aa710bf2bb48229c9, type: 3}
 --- !u!1 &379630113
 GameObject:
@@ -7332,7 +7336,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0
+  m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 000000009960ba10295ef8c0
@@ -13645,6 +13649,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 634270596}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1923962474 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1002000000000000001, guid: c082777a6502448aa710bf2bb48229c9, type: 3}
+  m_PrefabInstance: {fileID: 373494936}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1923962481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1923962474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba42fdf78ffcd294ca0bc97aa753f480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Starflea2
+  contactDamage: 1
+  healthSystem: {fileID: 0}
+  moveSpeed: 1.5
+  bodyRadius: 0.28
+  surfaceLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  startMovingLeft: 0
+  cornerLookAhead: 0.08
+  surfaceSnapDistance: 0.2
+  skinWidth: 0.03
+  airborneGravityScale: 1
+  landingProbeDistance: 0.25
+  fallingSprite: {fileID: 0}
+  movementSprites: []
+  movementFrameRate: 6
+  flipVisualFacing: 1
+  visualSortingOrder: 5
+  electricDuration: 2
+  autoElectricInterval: 5
+  electricRadius: 2
+  electricDamage: 1
+  electricTickRate: 0.25
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  electricAttackSprites: []
+  electricFrameRate: 8
+  electricFXPrefab: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -122,7 +122,9 @@ public class Starflea2 : StarfleaBase
         {
             HealthSystem health = hit.GetComponent<HealthSystem>();
             if (health != null)
-                health.TakeDamage(electricDamage);
+            {
+                TryDamagePlayer(health.gameObject, 15f);
+            }
         }
     }
 
