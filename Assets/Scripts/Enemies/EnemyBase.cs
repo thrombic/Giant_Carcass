@@ -10,6 +10,7 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected int currentHealth;
     protected bool isDead;
+    protected bool contactDamageEnabled = true;
     protected SpriteRenderer spriteRenderer;
     protected Color originalColor;
 
@@ -30,11 +31,10 @@ public abstract class EnemyBase : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
-        if (!healthSystem.IsInvulnerable)
-        {
-            StartCoroutine(FlashRoutine());
-        }
+        if (healthSystem.IsInvulnerable)
+            return;
 
+        StartCoroutine(FlashRoutine());
         healthSystem.TakeDamage(amount);
     }
 
@@ -53,18 +53,25 @@ public abstract class EnemyBase : MonoBehaviour
     {
     }
 
-    void OnTriggerStay2D(Collider2D other)
+    protected void OnTriggerStay2D(Collider2D other)
     {
-        TryDamagePlayer(other.gameObject);
+        if (contactDamageEnabled)
+            TryDamagePlayer(other.gameObject, 5f);
     }
 
-    void TryDamagePlayer(GameObject target)
+    protected void TryDamagePlayer(GameObject target, float knockbackForce)
     {
-        if (!target.CompareTag("Player"))
+        if (target.layer != LayerMask.NameToLayer("Player"))
             return;
 
         HealthSystem playerHealth = target.GetComponent<HealthSystem>();
-        if (playerHealth != null)
+        PlayerDamageReceiver playerDamageReceiver = playerHealth.GetComponent<PlayerDamageReceiver>();
+        // TODO: change 2nd parameter (knockbackForce) based on enemy type
+
+        if (playerHealth != null && !playerDamageReceiver.IsInvincible)
+        {
             playerHealth.TakeDamage(contactDamage);
+            StartCoroutine(playerDamageReceiver.ApplyStunAndKnockback((target.transform.position - transform.position).normalized, knockbackForce));
+        }
     }
 }

@@ -4,7 +4,7 @@ public class HealthSystem : MonoBehaviour
 {
     [Header("Health")]
     public int maxHealth = 20;
-    public float invulnerabilitySeconds = 0.5f;
+    public float invulnerabilitySeconds = 1f;
 
     public int CurrentHealth { get; private set; }
 
