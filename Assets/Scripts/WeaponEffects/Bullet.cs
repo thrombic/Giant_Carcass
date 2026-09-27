@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    public float speed = 14f;
-    public float lifetime = 3f;
+    public float speed = 30f;
+    public float lifetime = 2f;
 
     private Vector2 direction;
 
@@ -24,6 +24,16 @@ public class Bullet : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        // Try to hit a door
+        Door door = collision.gameObject.GetComponent<Door>();
+        if (door != null)
+        {
+            door.TakeHit();
+            //AudioManager.Instance.PlayHit();
+            Destroy(gameObject);
+            return;
+        }
+
         Destroy(gameObject);
     }
 
@@ -34,16 +44,6 @@ public class Bullet : MonoBehaviour
         if (enemy != null)
         {
             enemy.TakeDamage(10);
-            Destroy(gameObject);
-            return;
-        }
-
-        // Try to hit a door
-        Door door = other.GetComponent<Door>();
-        if (door != null)
-        {
-            door.TakeHit();
-            //AudioManager.Instance.PlayHit();
             Destroy(gameObject);
             return;
         }
