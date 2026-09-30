@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using static UnityEngine.Rendering.DebugUI;
 using static UnityEngine.UI.Image;
 
@@ -51,6 +52,7 @@ public class PlayerController : MonoBehaviour
 
     // ?? New Input System: cached input values read from callbacks ??
     [SerializeField] private GameObject flashlight;
+    [SerializeField] private GameObject bodyLight;
     [SerializeField] private GameObject jets;
 
     private Vector2 moveInput;
@@ -59,6 +61,7 @@ public class PlayerController : MonoBehaviour
     private bool jumpPeaked;
     private bool flarePressed;
     private bool firePressed;
+    private bool toggleLightPressed;
     private bool aimHeld;
     private bool jetpackHeld;
 
@@ -165,7 +168,11 @@ public class PlayerController : MonoBehaviour
     {
         jetpackHeld = !isStunned && value.isPressed;
     }
-
+    public void OnToggleLight(InputValue value)
+    {
+        toggleLightPressed = !isStunned && value.isPressed;
+    }
+    
     void FixedUpdate()
     {
         //if (isStunned) return;
@@ -180,6 +187,7 @@ public class PlayerController : MonoBehaviour
         HandleJump();
         HandleFlare();
         HandleShooting();
+        HandleToggleLight();
 
         fireCooldown -= Time.deltaTime;
 
@@ -187,6 +195,7 @@ public class PlayerController : MonoBehaviour
         jumpPressed = false;
         firePressed = false;
         flarePressed = false;
+        toggleLightPressed = false;
     }
 
     /// Casts the same left/right ground rays used for isGrounded, but also
@@ -196,6 +205,20 @@ public class PlayerController : MonoBehaviour
     void HandleGroundAndSlope()
     {
         float dynamicCheckDistance = groundCheckDistance + Mathf.Abs(rb.linearVelocity.x) * Time.fixedDeltaTime;
+
+        Bounds b = GetComponent<Collider2D>().bounds;
+        float checkDistance = 0.05f;
+        float widthShrink = 0.02f; // avoids catching walls
+
+        Vector2 size = new Vector2(b.size.x - widthShrink, b.size.y);
+        RaycastHit2D hit = Physics2D.BoxCast(
+            b.center,
+            size,
+            0f,
+            Vector2.down,
+            checkDistance,
+            groundLayer
+        );
 
         RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(1.5f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer); // TODO: change this to use collider bounds
         RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(1.5f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer);
@@ -214,7 +237,11 @@ public class PlayerController : MonoBehaviour
 
             raycastNormal = normal;
             float raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
-            isGrounded = raycastAngle <= maxSlopeAngle;
+            isGrounded = raycastAngle <= maxSlopeAngle && rb.linearVelocityY <= 0 && hit.collider != null;
+
+            // rb.linearVelocityY <= 0 is useful for one-way platforms
+            // raycastAngle <= maxSlopeAngle is useful for slopes that are too steep to stand on
+
         }
         else
         {
@@ -409,6 +436,35 @@ public class PlayerController : MonoBehaviour
             Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
             Instantiate(flarePrefab, spawnPos, Quaternion.identity)
                 .GetComponent<Flare>().SetDirection(spawnDir);
+        }
+    }
+
+    void HandleToggleLight()
+    {
+        if (!toggleLightPressed)
+            return;
+
+        StartCoroutine(ToggleLight());
+    }
+
+    // turn off the light that is on first, then turn on the other light after a short delay
+    IEnumerator ToggleLight()
+    {
+        // switch between flashlight and body light
+        GameObject firstLight = flashlight.activeSelf ? flashlight : bodyLight;
+
+        if (firstLight == flashlight)
+        {
+            flashlight.SetActive(!flashlight.activeSelf);
+            yield return new WaitForSeconds(0.05f);
+            bodyLight.GetComponent<Light2D>().intensity = 1f;
+        }
+        else
+        {
+            // body light should always be on, but its intensity will be reduced when flashlight is on
+            bodyLight.GetComponent<Light2D>().intensity = 0.05f;
+            yield return new WaitForSeconds(0.05f);
+            flashlight.SetActive(!flashlight.activeSelf);
         }
     }
 

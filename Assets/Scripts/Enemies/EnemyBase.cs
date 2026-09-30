@@ -66,7 +66,6 @@ public abstract class EnemyBase : MonoBehaviour
 
         HealthSystem playerHealth = target.GetComponent<HealthSystem>();
         PlayerDamageReceiver playerDamageReceiver = playerHealth.GetComponent<PlayerDamageReceiver>();
-        // TODO: change 2nd parameter (knockbackForce) based on enemy type
 
         if (playerHealth != null && !playerDamageReceiver.IsInvincible)
         {

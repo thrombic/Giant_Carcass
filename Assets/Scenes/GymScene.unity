@@ -166,7 +166,7 @@ MonoBehaviour:
   m_ComponentVersion: 2
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.5
+  m_FalloffIntensity: 0.75
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 0.1
   m_LightVolumeIntensity: 1
@@ -192,7 +192,7 @@ MonoBehaviour:
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
   m_PointLightInnerRadius: 0
-  m_PointLightOuterRadius: 1.5
+  m_PointLightOuterRadius: 15
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
@@ -6618,6 +6618,7 @@ GameObject:
   - component: {fileID: 934512962}
   - component: {fileID: 934512961}
   - component: {fileID: 934512960}
+  - component: {fileID: 934512966}
   - component: {fileID: 934512959}
   - component: {fileID: 934512958}
   - component: {fileID: 934512957}
@@ -6813,7 +6814,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 2048
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -6896,10 +6897,11 @@ MonoBehaviour:
   groundCheckDistance: 0.1
   groundLayer:
     serializedVersion: 2
-    m_Bits: 265
+    m_Bits: 2313
   maxSlopeAngle: 60
   slopeStickForce: 8
   flashlight: {fileID: 1830949526}
+  bodyLight: {fileID: 47382057}
   jets: {fileID: 1346682271}
   isStunned: 0
   fuel: 90
@@ -7007,6 +7009,52 @@ MonoBehaviour:
   hazardResetTrigger: HazardReset
   hazardResetSprite: {fileID: 0}
   hazardResetTint: {r: 1, g: 0.45, b: 0.15, a: 1}
+--- !u!61 &934512966
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934512955}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 2048
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: -3}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 5.37, y: 7}
+    newSize: {x: 0.78, y: 0.78}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 3, y: 1}
+  m_EdgeRadius: 0
 --- !u!1 &941459817
 GameObject:
   m_ObjectHideFlags: 0
@@ -7336,7 +7384,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 000000009960ba10295ef8c0
@@ -13500,7 +13548,7 @@ MonoBehaviour:
   m_PointLightInnerAngle: 10
   m_PointLightOuterAngle: 45
   m_PointLightInnerRadius: 2
-  m_PointLightOuterRadius: 20
+  m_PointLightOuterRadius: 30
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
@@ -13695,6 +13743,63 @@ MonoBehaviour:
   electricAttackSprites: []
   electricFrameRate: 8
   electricFXPrefab: {fileID: 0}
+--- !u!1001 &1973527991614868074
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.89
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 243128282361902137, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8050465856200035237, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+      propertyPath: m_Name
+      value: GasPocket
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -13706,3 +13811,4 @@ SceneRoots:
   - {fileID: 634270596}
   - {fileID: 394065299}
   - {fileID: 373494936}
+  - {fileID: 1973527991614868074}
