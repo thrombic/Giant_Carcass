@@ -76,6 +76,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int maxFuel = 90;
 
     [SerializeField] private LightningBeam lightningBeam;
+    [SerializeField] private Animator animator;
     
     private bool controlsEnabled = true;
     public bool ControlsEnabled => controlsEnabled;
@@ -340,7 +341,8 @@ public class PlayerController : MonoBehaviour
     }
 
     void HandleMovement()
-    {
+    {   
+
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
         if (isGrounded)
         {
@@ -420,6 +422,20 @@ public class PlayerController : MonoBehaviour
         else if (moveInput.x < 0 && !facingLeft) Flip();
 
         HandleLight();
+        HandleCrouch();
+    }
+
+    /** Animation logic for jump **/
+    void HandleCrouch()
+    {
+        if (Keyboard.current != null && Keyboard.current.cKey.isPressed)
+        {
+            animator.SetBool("isCrouch", true);
+        }
+        else
+        {
+            animator.SetBool("isCrouch", false);
+        }
     }
 
     void HandleLight()
@@ -442,7 +458,9 @@ public class PlayerController : MonoBehaviour
         // Blend jump direction toward the ground normal so jumping off a
         // slope gives a natural push instead of always firing straight up.
         //Vector2 jumpDir = onSlope ? Vector2.Lerp(Vector2.up, groundNormal, 0.5f).normalized : Vector2.up; 
+        
 
+ 
         if (jumpPressed && isGrounded)
         {
             jumpPeaked = false;
@@ -461,6 +479,18 @@ public class PlayerController : MonoBehaviour
                 rb.linearVelocityY = 0;
                 jumpPeaked = true;
             }
+        }
+
+        /** Animation logic for jump **/
+        // in air
+        if(jumpPressed || !isGrounded)
+        {
+            animator.SetBool("isJumping", true);
+        }
+        // on ground
+        if(isGrounded)
+        {
+            animator.SetBool("isJumping", false);
         }
     }
 
