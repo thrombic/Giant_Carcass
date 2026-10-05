@@ -6623,6 +6623,7 @@ GameObject:
   - component: {fileID: 934512958}
   - component: {fileID: 934512957}
   - component: {fileID: 934512965}
+  - component: {fileID: 934512967}
   m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
@@ -6887,6 +6888,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterController
   moveSpeed: 12
+  acceleration: 60
+  deceleration: 80
   jumpForce: 30
   jetpackForce: 15
   bulletPrefab: {fileID: 7370048508838941359, guid: 7fc9d0a326666f04c9c731724c748cfa, type: 3}
@@ -6907,6 +6910,7 @@ MonoBehaviour:
   fuel: 90
   maxFuel: 90
   lightningBeam: {fileID: 934512958}
+  animator: {fileID: 934512967}
 --- !u!50 &934512963
 Rigidbody2D:
   serializedVersion: 5
@@ -7055,6 +7059,28 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3, y: 1}
   m_EdgeRadius: 0
+--- !u!95 &934512967
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934512955}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 4f9764790d69c1f48a6a2396b408f960, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &941459817
 GameObject:
   m_ObjectHideFlags: 0
@@ -7384,7 +7410,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0
+  m_Intensity: 0.5
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 000000009960ba10295ef8c0
