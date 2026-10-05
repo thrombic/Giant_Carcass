@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed = 12f;
+    public float acceleration = 60f;
+    public float deceleration = 80f;
     public float jumpForce = 18f;
     public float jetpackForce = 12.5f;
 
@@ -40,13 +42,14 @@ public class PlayerController : MonoBehaviour
     private bool hasFreshContact = false;
     private int framesSinceLastContact = 0;
 
-    // Slope state, updated each ground check in HandleJump()
+    // Slope state, updated each ground check in HandleGroundAndSlope()
     private Vector2 groundNormal = Vector2.up;
     private float currentSlopeAngle;
     private bool isGrounded;
     private bool onSlope;
 
     private Rigidbody2D rb;
+    private float defaultGravityScale;
     private float fireCooldown;
     private bool facingLeft = true;
 
@@ -81,6 +84,7 @@ public class PlayerController : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+        defaultGravityScale = rb.gravityScale;
 
         if (GetComponent<HealthSystem>() == null)
             gameObject.AddComponent<HealthSystem>();
@@ -168,6 +172,7 @@ public class PlayerController : MonoBehaviour
     {
         jetpackHeld = !isStunned && value.isPressed;
     }
+
     public void OnToggleLight(InputValue value)
     {
         toggleLightPressed = !isStunned && value.isPressed;
@@ -198,8 +203,9 @@ public class PlayerController : MonoBehaviour
         toggleLightPressed = false;
     }
 
-    /// Casts the same left/right ground rays used for isGrounded, but also
-    /// reads the surface normal so movement/jumping can account for slopes.
+    /// <summary>
+    /// Casts ground rays and boxcasts to evaluate isGrounded and surface normal
+    /// so movement/jumping can account for slopes.
     /// Runs once per FixedUpdate, before movement and jump logic use the result.
     /// </summary>
     void HandleGroundAndSlope()
@@ -220,10 +226,15 @@ public class PlayerController : MonoBehaviour
             groundLayer
         );
 
-        RaycastHit2D hitLeft = Physics2D.Raycast(groundCheck.position - new Vector3(1.5f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer); // TODO: change this to use collider bounds
-        RaycastHit2D hitRight = Physics2D.Raycast(groundCheck.position + new Vector3(1.5f, 0, 0), Vector2.down, dynamicCheckDistance, groundLayer);
+        // Ground raycasts aligned with collider bounds
+        float halfWidth = (b.size.x - widthShrink) * 0.5f;
+        Vector2 rayOriginLeft = new Vector2(b.center.x - halfWidth, b.min.y + 0.02f);
+        Vector2 rayOriginRight = new Vector2(b.center.x + halfWidth, b.min.y + 0.02f);
 
-        bool hitAny = hitLeft.collider != null || hitRight.collider != null;
+        RaycastHit2D hitLeft = Physics2D.Raycast(rayOriginLeft, Vector2.down, dynamicCheckDistance, groundLayer);
+        RaycastHit2D hitRight = Physics2D.Raycast(rayOriginRight, Vector2.down, dynamicCheckDistance, groundLayer);
+
+        bool hitAny = hit.collider != null || hitLeft.collider != null || hitRight.collider != null;
 
         if (hitAny)
         {
@@ -232,16 +243,21 @@ public class PlayerController : MonoBehaviour
             Vector2 normal;
             if (hitLeft.collider != null && hitRight.collider != null)
                 normal = (hitLeft.normal + hitRight.normal).normalized;
+            else if (hitLeft.collider != null)
+                normal = hitLeft.normal;
+            else if (hitRight.collider != null)
+                normal = hitRight.normal;
             else
-                normal = hitLeft.collider != null ? hitLeft.normal : hitRight.normal;
+                normal = hit.normal;
 
             raycastNormal = normal;
             float raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
-            isGrounded = raycastAngle <= maxSlopeAngle && rb.linearVelocityY <= 0 && hit.collider != null;
 
-            // rb.linearVelocityY <= 0 is useful for one-way platforms
             // raycastAngle <= maxSlopeAngle is useful for slopes that are too steep to stand on
+            bool isValidAngle = raycastAngle <= maxSlopeAngle;
+            bool isJumpingUp = rb.linearVelocity.y > 0.1f && !onSlope && moveInput.x == 0;
 
+            isGrounded = isValidAngle && !isJumpingUp;
         }
         else
         {
@@ -297,6 +313,7 @@ public class PlayerController : MonoBehaviour
         // while jetpacking, increase change in x and/or y velocity based on input, and reduce fuel
         if (jetpackHeld && moveInput != Vector2.zero && fuel > 0)
         {
+            rb.gravityScale = defaultGravityScale;
             float angle = Mathf.Atan2(-moveInput.y, -moveInput.x) * Mathf.Rad2Deg;
             if (facingLeft)
                 angle -= 180;
@@ -319,51 +336,84 @@ public class PlayerController : MonoBehaviour
             else if (moveInput.x < 0 && !facingLeft) Flip();
 
             // TODO: gun and eyes should follow aim direction
-
         }
     }
 
     void HandleMovement()
     {
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
-        if (!aimHeld && moveInput.x != 0)
+        if (isGrounded)
         {
-            float maxSpeed = (jetpackHeld && fuel > 0) ? moveSpeed * 2 : moveSpeed;
+            float maxSpeed = (jetpackHeld && fuel > 0) ? moveSpeed * 2f : moveSpeed;
 
-            if (isGrounded && onSlope && !jumpHeld)
+            if (onSlope && !jumpHeld)
             {
+                rb.gravityScale = 0f;
+
                 // Redirect horizontal input along the slope surface so the
                 // player accelerates parallel to the ground instead of
                 // straight sideways, which would fight the collider on
                 // steeper curves/ramps.
                 Vector2 slopeDir = new Vector2(groundNormal.y, -groundNormal.x);
-                Vector2 alongSlope = slopeDir * moveInput.x;
+                Vector2 targetDir = slopeDir * moveInput.x;
 
-                rb.linearVelocity = alongSlope * maxSpeed;
+                if (!aimHeld && moveInput.x != 0)
+                {
+                    Vector2 targetVelocity = targetDir * maxSpeed;
+                    rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, targetVelocity, acceleration * Time.fixedDeltaTime);
 
-                // Keep the player stuck to descending slopes instead of momentarily
-                // going airborne over convex bumps.
-                if (rb.linearVelocity.y <= 0f)
-                    rb.linearVelocityY -= slopeStickForce * Time.fixedDeltaTime;
+                    // Keep the player stuck to descending slopes instead of momentarily
+                    // going airborne over convex bumps.
+                    if (rb.linearVelocity.y <= 0f)
+                        rb.linearVelocityY -= slopeStickForce * Time.fixedDeltaTime;
+                }
+                else
+                {
+                    rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, deceleration * Time.fixedDeltaTime);
 
+                    // TODO: perhaps fuel should regen whenever grounded
+                    if (fuel < maxFuel)
+                        fuel = Mathf.Min(fuel + 5, maxFuel);
+                }
             }
             else
             {
-                rb.linearVelocityX += moveInput.x;
-                rb.linearVelocityX = Mathf.Clamp(rb.linearVelocityX, -maxSpeed, maxSpeed);
+                rb.gravityScale = defaultGravityScale;
+
+                if (!aimHeld && moveInput.x != 0)
+                {
+                    float targetX = moveInput.x * maxSpeed;
+                    float newX = Mathf.MoveTowards(rb.linearVelocity.x, targetX, acceleration * Time.fixedDeltaTime);
+                    rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
+                }
+                else
+                {
+                    // simple friction when no input
+                    float newX = Mathf.MoveTowards(rb.linearVelocity.x, 0f, deceleration * Time.fixedDeltaTime);
+                    rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
+
+                    // TODO: perhaps fuel should regen whenever grounded
+                    if (fuel < maxFuel)
+                        fuel = Mathf.Min(fuel + 5, maxFuel);
+                }
+            }
+
+            if (!onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
+            {
+                rb.linearVelocityY = 0;
             }
         }
-        else if (isGrounded)
+        else
         {
-            rb.linearVelocityX *= 0.8f; // simple friction when no input
-            rb.linearVelocityY *= 0.8f;
-            fuel += 5; // TODO: perhaps fuel should regen whenever grounded
-            if (fuel > maxFuel) fuel = maxFuel;
-        }
+            rb.gravityScale = defaultGravityScale;
 
-        if (isGrounded && !onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
-        {
-            rb.linearVelocityY = 0;
+            if (!aimHeld && moveInput.x != 0)
+            {
+                float maxSpeed = (jetpackHeld && fuel > 0) ? moveSpeed * 2f : moveSpeed;
+                float targetX = moveInput.x * maxSpeed;
+                float newX = Mathf.MoveTowards(rb.linearVelocity.x, targetX, acceleration * Time.fixedDeltaTime);
+                rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
+            }
         }
 
         if (moveInput.x > 0 && facingLeft) Flip();
@@ -396,6 +446,8 @@ public class PlayerController : MonoBehaviour
         if (jumpPressed && isGrounded)
         {
             jumpPeaked = false;
+            isGrounded = false;
+            rb.gravityScale = defaultGravityScale;
 
             Vector2 jumpDir = Vector2.up;
             Vector2 launchVelocity = jumpDir * jumpForce;
