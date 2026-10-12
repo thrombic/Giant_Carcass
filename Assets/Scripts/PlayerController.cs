@@ -58,10 +58,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject bodyLight;
     [SerializeField] private GameObject jets;
 
+    [SerializeField] private Collider2D feetCollider;
+
     private Vector2 moveInput;
     private bool jumpPressed;
     private bool jumpHeld;
-    private bool jumpPeaked;
+    private bool jumpPeaked = true;
     private bool flarePressed;
     private bool firePressed;
     private bool toggleLightPressed;
@@ -212,7 +214,7 @@ public class PlayerController : MonoBehaviour
     {
         float dynamicCheckDistance = groundCheckDistance + Mathf.Abs(rb.linearVelocity.x) * Time.fixedDeltaTime;
 
-        Bounds b = GetComponent<Collider2D>().bounds;
+        Bounds b = feetCollider.bounds;
         float checkDistance = 0.05f;
         float widthShrink = 0.02f; // avoids catching walls
 
@@ -235,6 +237,7 @@ public class PlayerController : MonoBehaviour
         RaycastHit2D hitRight = Physics2D.Raycast(rayOriginRight, Vector2.down, dynamicCheckDistance, groundLayer);
 
         bool hitAny = hit.collider != null || hitLeft.collider != null || hitRight.collider != null;
+        float raycastAngle = 0;
 
         if (hitAny)
         {
@@ -251,7 +254,7 @@ public class PlayerController : MonoBehaviour
                 normal = hit.normal;
 
             raycastNormal = normal;
-            float raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
+            raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
 
             // raycastAngle <= maxSlopeAngle is useful for slopes that are too steep to stand on
             bool isValidAngle = raycastAngle <= maxSlopeAngle;
@@ -259,10 +262,10 @@ public class PlayerController : MonoBehaviour
 
             isGrounded = isValidAngle && !isJumpingUp;
         }
+        if (jumpPeaked)
+            isGrounded = raycastAngle <= maxSlopeAngle && hit.collider != null;
         else
-        {
             isGrounded = false;
-        }
 
         // --- Pick which normal to trust ---
         // Contacts are more accurate but a frame stale; only trust them if they
@@ -454,9 +457,12 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x + launchVelocity.x, launchVelocity.y);
             //AudioManager.Instance.PlayJump();
         }
+        if (rb.linearVelocityY < 0)
+            jumpPeaked = true;
+            
         if (!jumpPeaked)
         {
-            if (!jumpHeld && rb.linearVelocity.y > 0)
+            if ((!jumpHeld && !jetpackHeld) && rb.linearVelocity.y > 0)
             {
                 rb.linearVelocityY = 0;
                 jumpPeaked = true;
@@ -493,6 +499,8 @@ public class PlayerController : MonoBehaviour
 
     void HandleToggleLight()
     {
+        // TODO: check duration of button held, longHold to turn off all lights, otherwise toggle
+
         if (!toggleLightPressed)
             return;
 

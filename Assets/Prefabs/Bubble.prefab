@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6917099040986962819}
-  - component: {fileID: 7306984871821743811}
+  - component: {fileID: 3898938023677617263}
   - component: {fileID: 5477401053844495420}
   - component: {fileID: 3674856975315472096}
   - component: {fileID: 4017434475943776294}
@@ -36,7 +36,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &7306984871821743811
+--- !u!212 &3898938023677617263
 SpriteRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
@@ -149,7 +149,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.88
+  m_Radius: 2
 --- !u!114 &4017434475943776294
 MonoBehaviour:
   m_ObjectHideFlags: 0

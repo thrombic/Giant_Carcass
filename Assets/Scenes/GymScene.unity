@@ -6625,7 +6625,7 @@ GameObject:
   - component: {fileID: 934512965}
   m_Layer: 7
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6903,6 +6903,7 @@ MonoBehaviour:
   flashlight: {fileID: 1830949526}
   bodyLight: {fileID: 47382057}
   jets: {fileID: 1346682271}
+  feetCollider: {fileID: 934512966}
   isStunned: 0
   fuel: 90
   maxFuel: 90
@@ -13800,6 +13801,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 61fe9a2b4b139cd419ef6b08c121ff38, type: 3}
+--- !u!1001 &4376749073023086435
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -15.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -17.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1551695831177488966, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5783842219527192736, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
+      propertyPath: m_Name
+      value: Coycrawler
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d16b62d2d3483574ba07cc4474141f64, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -13812,3 +13870,4 @@ SceneRoots:
   - {fileID: 394065299}
   - {fileID: 373494936}
   - {fileID: 1973527991614868074}
+  - {fileID: 4376749073023086435}
