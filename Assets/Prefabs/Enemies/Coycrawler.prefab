@@ -85,9 +85,9 @@ MonoBehaviour:
   occlusionMask:
     serializedVersion: 2
     m_Bits: 0
-  exposureThreshold: 0.6
+  exposureThreshold: 0.4
   calmThreshold: 0.3
-  detectionDelay: 0.25
+  detectionDelay: 0.4
   rescanInterval: 0.25
 --- !u!1 &5783842219527192736
 GameObject:
@@ -291,6 +291,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Coycrawler
   contactDamage: 1
   healthSystem: {fileID: 0}
+  moveSpeed: 2
   uprightSprite: {fileID: 1949946322088357681, guid: 122ecdf74a1c29d4eba8626492227049, type: 3}
   downedSprite: {fileID: -1198521210660011882, guid: 34339a37b9bc8e14cbd86bc4c27adaaa, type: 3}
 --- !u!50 &5908393810582830971
@@ -306,7 +307,7 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1000
-  m_LinearDamping: 0
+  m_LinearDamping: 1
   m_AngularDamping: 0.05
   m_GravityScale: 1
   m_Material: {fileID: 0}
