@@ -196,7 +196,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aeac196cfb0eef4fb9c721baeab718a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightningOrb
-  radius: 0.7
+  radius: 1
   arcCount: 7
   arcSegments: 12
   chaos: 0.18
@@ -219,7 +219,7 @@ MonoBehaviour:
   lightIntensity: 1.8
   lightRadius: 2.5
   lightFlickerAmount: 0.15
-  charge: 0
+  charge: 1
   maxRadiusScale: 1.4
   maxExtraArcs: 8
 --- !u!50 &-4920354254809713988
@@ -290,7 +290,7 @@ MonoBehaviour:
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
   m_PointLightInnerRadius: 0
-  m_PointLightOuterRadius: 2
+  m_PointLightOuterRadius: 4
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1

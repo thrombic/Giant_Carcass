@@ -67,6 +67,7 @@ public class PlayerController : MonoBehaviour
     private bool flarePressed;
     private bool firePressed;
     private bool toggleLightPressed;
+    private bool toggleLightHeld;
     private bool aimHeld;
     private bool jetpackHeld;
 
@@ -177,7 +178,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnToggleLight(InputValue value)
     {
-        toggleLightPressed = !isStunned && value.isPressed;
+        toggleLightPressed = toggleLightHeld = !isStunned && value.isPressed;
     }
     
     void FixedUpdate()
@@ -373,10 +374,6 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, deceleration * Time.fixedDeltaTime);
-
-                    // TODO: perhaps fuel should regen whenever grounded
-                    if (fuel < maxFuel)
-                        fuel = Mathf.Min(fuel + 5, maxFuel);
                 }
             }
             else
@@ -394,17 +391,15 @@ public class PlayerController : MonoBehaviour
                     // simple friction when no input
                     float newX = Mathf.MoveTowards(rb.linearVelocity.x, 0f, deceleration * Time.fixedDeltaTime);
                     rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
-
-                    // TODO: perhaps fuel should regen whenever grounded
-                    if (fuel < maxFuel)
-                        fuel = Mathf.Min(fuel + 5, maxFuel);
                 }
             }
 
             if (!onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
-            {
                 rb.linearVelocityY = 0;
-            }
+
+            // fuel should regen when grounded and not jetpacking
+            if (fuel < maxFuel && !jetpackHeld)
+                fuel = Mathf.Min(fuel + 5, maxFuel);
         }
         else
         {
@@ -516,14 +511,18 @@ public class PlayerController : MonoBehaviour
         if (firstLight == flashlight)
         {
             flashlight.SetActive(!flashlight.activeSelf);
-            yield return new WaitForSeconds(0.05f);
+            while (toggleLightHeld)
+                yield return null;
+
             bodyLight.GetComponent<Light2D>().intensity = 1f;
         }
         else
         {
             // body light should always be on, but its intensity will be reduced when flashlight is on
             bodyLight.GetComponent<Light2D>().intensity = 0.05f;
-            yield return new WaitForSeconds(0.05f);
+            while (toggleLightHeld)
+                yield return null;
+
             flashlight.SetActive(!flashlight.activeSelf);
         }
     }

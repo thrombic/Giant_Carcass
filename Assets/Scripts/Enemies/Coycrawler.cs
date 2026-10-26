@@ -7,11 +7,15 @@ public class Coycrawler : EnemyBase
     private bool isUpright = true;
     private bool facingLeft = true;
     private float moveDirection;
+    [SerializeField] private float moveSpeed = 2;
     private LightDetector detector;
 
     private SpriteRenderer sr;
     private Collider2D col;
     private LayerMask groundLayers;
+
+    private float resetTime = 3;
+    private float resetTimer = 0;
 
     [SerializeField] private Sprite uprightSprite;
     [SerializeField] private Sprite downedSprite;
@@ -42,6 +46,9 @@ public class Coycrawler : EnemyBase
     {
         if (detector.CurrentExposure > detector.exposureThreshold) // switch to dormant behavior
         {
+            // reset timer
+            resetTimer = resetTime;
+
             isUpright = false;
             contactDamageEnabled = false;
             sr.sprite = downedSprite;
@@ -49,15 +56,22 @@ public class Coycrawler : EnemyBase
         }
         else
         {
-            isUpright = true;
-            contactDamageEnabled = true;
-            sr.sprite = uprightSprite;
+            // decrement timer
+            resetTimer -= Time.deltaTime;
+
+            // if timer < 0, switch to active behavior
+            if (resetTimer < 0 && !isUpright)
+            {
+                isUpright = true;
+                contactDamageEnabled = true;
+                sr.sprite = uprightSprite;
+            }
         }
     }
 
     void Move()
     {
-        transform.position += new Vector3(moveDirection * Time.deltaTime, 0, 0);
+        transform.position += new Vector3(moveSpeed * moveDirection * Time.deltaTime, 0, 0);
         // move left/right
     }
 

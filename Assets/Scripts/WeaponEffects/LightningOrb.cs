@@ -145,7 +145,7 @@ public class LightningOrb : MonoBehaviour
         {
             float flicker = 1f + Random.Range(-lightFlickerAmount, lightFlickerAmount);
             orbLight.intensity = lightIntensity * (0.7f + charge * 0.3f) * flicker;
-            orbLight.pointLightOuterRadius = lightRadius * (1f + charge * 0.3f);
+            orbLight.pointLightOuterRadius = lightRadius * (1f + charge * 2.0f);
         }
 
         // Tick bolt lifetimes

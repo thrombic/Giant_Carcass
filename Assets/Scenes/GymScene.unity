@@ -6887,6 +6887,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterController
   moveSpeed: 12
+  acceleration: 60
+  deceleration: 80
   jumpForce: 30
   jetpackForce: 15
   bulletPrefab: {fileID: 7370048508838941359, guid: 7fc9d0a326666f04c9c731724c748cfa, type: 3}
@@ -7010,6 +7012,7 @@ MonoBehaviour:
   hazardResetTrigger: HazardReset
   hazardResetSprite: {fileID: 0}
   hazardResetTint: {r: 1, g: 0.45, b: 0.15, a: 1}
+  IsInvincible: 0
 --- !u!61 &934512966
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -7385,7 +7388,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0
+  m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 000000009960ba10295ef8c0
