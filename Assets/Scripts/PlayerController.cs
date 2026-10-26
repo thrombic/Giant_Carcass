@@ -58,13 +58,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject bodyLight;
     [SerializeField] private GameObject jets;
 
+    [SerializeField] private Collider2D feetCollider;
+
     private Vector2 moveInput;
     private bool jumpPressed;
     private bool jumpHeld;
-    private bool jumpPeaked;
+    private bool jumpPeaked = true;
     private bool flarePressed;
     private bool firePressed;
     private bool toggleLightPressed;
+    private bool toggleLightHeld;
     private bool aimHeld;
     private bool jetpackHeld;
 
@@ -176,7 +179,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnToggleLight(InputValue value)
     {
-        toggleLightPressed = !isStunned && value.isPressed;
+        toggleLightPressed = toggleLightHeld = !isStunned && value.isPressed;
     }
     
     void FixedUpdate()
@@ -213,7 +216,7 @@ public class PlayerController : MonoBehaviour
     {
         float dynamicCheckDistance = groundCheckDistance + Mathf.Abs(rb.linearVelocity.x) * Time.fixedDeltaTime;
 
-        Bounds b = GetComponent<Collider2D>().bounds;
+        Bounds b = feetCollider.bounds;
         float checkDistance = 0.05f;
         float widthShrink = 0.02f; // avoids catching walls
 
@@ -236,6 +239,7 @@ public class PlayerController : MonoBehaviour
         RaycastHit2D hitRight = Physics2D.Raycast(rayOriginRight, Vector2.down, dynamicCheckDistance, groundLayer);
 
         bool hitAny = hit.collider != null || hitLeft.collider != null || hitRight.collider != null;
+        float raycastAngle = 0;
 
         if (hitAny)
         {
@@ -252,7 +256,7 @@ public class PlayerController : MonoBehaviour
                 normal = hit.normal;
 
             raycastNormal = normal;
-            float raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
+            raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
 
             // raycastAngle <= maxSlopeAngle is useful for slopes that are too steep to stand on
             bool isValidAngle = raycastAngle <= maxSlopeAngle;
@@ -260,10 +264,10 @@ public class PlayerController : MonoBehaviour
 
             isGrounded = isValidAngle && !isJumpingUp;
         }
+        if (jumpPeaked)
+            isGrounded = raycastAngle <= maxSlopeAngle && hit.collider != null;
         else
-        {
             isGrounded = false;
-        }
 
         // --- Pick which normal to trust ---
         // Contacts are more accurate but a frame stale; only trust them if they
@@ -372,10 +376,6 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, deceleration * Time.fixedDeltaTime);
-
-                    // TODO: perhaps fuel should regen whenever grounded
-                    if (fuel < maxFuel)
-                        fuel = Mathf.Min(fuel + 5, maxFuel);
                 }
             }
             else
@@ -393,17 +393,15 @@ public class PlayerController : MonoBehaviour
                     // simple friction when no input
                     float newX = Mathf.MoveTowards(rb.linearVelocity.x, 0f, deceleration * Time.fixedDeltaTime);
                     rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
-
-                    // TODO: perhaps fuel should regen whenever grounded
-                    if (fuel < maxFuel)
-                        fuel = Mathf.Min(fuel + 5, maxFuel);
                 }
             }
 
             if (!onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
-            {
                 rb.linearVelocityY = 0;
-            }
+
+            // fuel should regen when grounded and not jetpacking
+            if (fuel < maxFuel && !jetpackHeld)
+                fuel = Mathf.Min(fuel + 5, maxFuel);
         }
         else
         {
@@ -472,9 +470,12 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x + launchVelocity.x, launchVelocity.y);
             //AudioManager.Instance.PlayJump();
         }
+        if (rb.linearVelocityY < 0)
+            jumpPeaked = true;
+            
         if (!jumpPeaked)
         {
-            if (!jumpHeld && rb.linearVelocity.y > 0)
+            if ((!jumpHeld && !jetpackHeld) && rb.linearVelocity.y > 0)
             {
                 rb.linearVelocityY = 0;
                 jumpPeaked = true;
@@ -523,6 +524,8 @@ public class PlayerController : MonoBehaviour
 
     void HandleToggleLight()
     {
+        // TODO: check duration of button held, longHold to turn off all lights, otherwise toggle
+
         if (!toggleLightPressed)
             return;
 
@@ -538,14 +541,18 @@ public class PlayerController : MonoBehaviour
         if (firstLight == flashlight)
         {
             flashlight.SetActive(!flashlight.activeSelf);
-            yield return new WaitForSeconds(0.05f);
+            while (toggleLightHeld)
+                yield return null;
+
             bodyLight.GetComponent<Light2D>().intensity = 1f;
         }
         else
         {
             // body light should always be on, but its intensity will be reduced when flashlight is on
             bodyLight.GetComponent<Light2D>().intensity = 0.05f;
-            yield return new WaitForSeconds(0.05f);
+            while (toggleLightHeld)
+                yield return null;
+
             flashlight.SetActive(!flashlight.activeSelf);
         }
     }
