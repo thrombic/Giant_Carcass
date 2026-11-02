@@ -11,7 +11,7 @@ public class PlayerDamageReceiver : MonoBehaviour
     public Color hazardResetTint = new Color(1f, 0.45f, 0.15f, 1f);
 
     public bool IsResetting { get; private set; }
-    public bool IsInvincible => invincibleTimer > 0;
+    public bool IsInvincible = false;
 
     private HealthSystem health;
     private Rigidbody2D rb;
@@ -38,6 +38,7 @@ public class PlayerDamageReceiver : MonoBehaviour
 
     private IEnumerator InvincibilityFlicker()
     {
+        IsInvincible = true;
         invincibleTimer = invincibleDuration;
 
         while (invincibleTimer > 0)
@@ -48,6 +49,7 @@ public class PlayerDamageReceiver : MonoBehaviour
         }
 
         spriteRenderer.enabled = true; // make sure it ends visible
+        IsInvincible = false;
     }
 
     public IEnumerator ApplyStunAndKnockback(Vector3 direction, float knockbackForce)

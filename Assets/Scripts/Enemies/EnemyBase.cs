@@ -18,6 +18,8 @@ public abstract class EnemyBase : MonoBehaviour
     protected SpriteRenderer spriteRenderer;
     protected Color originalColor;
 
+    IEnumerator knockbackPlayerRoutine = null;
+
     protected virtual void Awake()
     {
         healthSystem = GetComponent<HealthSystem>();
@@ -98,7 +100,7 @@ public abstract class EnemyBase : MonoBehaviour
         if (playerHealth != null && playerDamageReceiver != null && !playerDamageReceiver.IsInvincible)
         {
             playerHealth.TakeDamage(contactDamage);
-            StartCoroutine(playerDamageReceiver.ApplyStunAndKnockback((target.transform.position - transform.position).normalized, knockbackForce));
+            StartCoroutine(knockbackPlayerRoutine);
         }
     }
 }
