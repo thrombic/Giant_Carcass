@@ -10,7 +10,7 @@ public class Flare : MonoBehaviour
     [SerializeField] private Collider2D flareCollider;
     [SerializeField] private Collider2D damageCollider;
     private LightningOrb orb;
-    private Light2D light;
+    private Light2D flareLight;
     private Rigidbody2D rb;
 
     private bool collided = false;
@@ -23,11 +23,18 @@ public class Flare : MonoBehaviour
     private void Start()
     {
         orb = GetComponent<LightningOrb>();
-        light = GetComponent<Light2D>();
+        flareLight = GetComponent<Light2D>();
     }
 
     void OnTriggerStay2D(Collider2D other)
     {
+        IFlareReactive flareReactive = other.GetComponentInParent<IFlareReactive>();
+        if (flareReactive != null)
+        {
+            flareReactive.OnFlareContact(this);
+            return;
+        }
+
         // Try to hit an enemy
         EnemyBase enemy = other.GetComponent<EnemyBase>();
         if (enemy != null)
@@ -82,7 +89,7 @@ public class Flare : MonoBehaviour
     {
         yield return new WaitForSeconds(1f);
         orb.Activate();
-        light.enabled = true;
+        flareLight.enabled = true;
         damageCollider.enabled = true;
         yield return new WaitForSeconds(15f);
 
