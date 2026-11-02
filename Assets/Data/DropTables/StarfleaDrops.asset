@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd5010dcaf594f69a2a8e7f501552101, type: 3}
+  m_Name: StarfleaDrops
+  m_EditorClassIdentifier: Assembly-CSharp::DropTable
+  entries:
+  - prefab: {fileID: 2101000000000000001, guid: 6b8a34d901a341ad9fc638e7d2e4ea01, type: 3}
+    chancePercent: 20
+    spawnOffset: {x: 0, y: 0.35}
+  - prefab: {fileID: 2102000000000000001, guid: 8da24b196bf84330a95cf50fb8ec18ac, type: 3}
+    chancePercent: 15
+    spawnOffset: {x: 0, y: 0.35}
+  - prefab: {fileID: 2103000000000000001, guid: f1d3cb2caf294acfa3121a9ad4c0b6d1, type: 3}
+    chancePercent: 10
+    spawnOffset: {x: 0, y: 0.35}

@@ -5,8 +5,12 @@ using UnityEngine;
 public abstract class EnemyBase : MonoBehaviour
 {
     [Header("Stats")]
+    [Min(1)] public int maxHealth = 3;
     public int contactDamage = 1;
     public HealthSystem healthSystem;
+
+    [Header("Drops")]
+    public DropTable dropTable;
 
     protected int currentHealth;
     protected bool isDead;
@@ -16,14 +20,22 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected virtual void Awake()
     {
-        healthSystem = gameObject.AddComponent<HealthSystem>();
+        healthSystem = GetComponent<HealthSystem>();
+        if (healthSystem == null)
+            healthSystem = gameObject.AddComponent<HealthSystem>();
+
+        healthSystem.SetMaxHealth(maxHealth, true);
         currentHealth = healthSystem.maxHealth;
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        originalColor = spriteRenderer.color;
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (spriteRenderer != null)
+            originalColor = spriteRenderer.color;
     }
 
     private IEnumerator FlashRoutine()
     {
+        if (spriteRenderer == null)
+            yield break;
+
         spriteRenderer.color = Color.red;
         yield return new WaitForSeconds(.25f);
         spriteRenderer.color = originalColor;
@@ -31,11 +43,22 @@ public abstract class EnemyBase : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
-        if (healthSystem.IsInvulnerable)
+        if (isDead || healthSystem == null || healthSystem.IsInvulnerable)
             return;
 
+        int healthBeforeDamage = healthSystem.CurrentHealth;
         StartCoroutine(FlashRoutine());
         healthSystem.TakeDamage(amount);
+        currentHealth = healthSystem.CurrentHealth;
+
+        if (currentHealth <= 0)
+        {
+            Die();
+            return;
+        }
+
+        if (currentHealth < healthBeforeDamage)
+            OnDamaged();
     }
 
     protected virtual void OnDamaged()
@@ -44,8 +67,13 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected virtual void Die()
     {
+        if (isDead)
+            return;
+
         isDead = true;
         OnDeath();
+        if (dropTable != null)
+            dropTable.TrySpawnDrop(transform.position);
         Destroy(gameObject, 0.15f);
     }
 
@@ -65,9 +93,9 @@ public abstract class EnemyBase : MonoBehaviour
             return;
 
         HealthSystem playerHealth = target.GetComponent<HealthSystem>();
-        PlayerDamageReceiver playerDamageReceiver = playerHealth.GetComponent<PlayerDamageReceiver>();
+        PlayerDamageReceiver playerDamageReceiver = target.GetComponent<PlayerDamageReceiver>();
 
-        if (playerHealth != null && !playerDamageReceiver.IsInvincible)
+        if (playerHealth != null && playerDamageReceiver != null && !playerDamageReceiver.IsInvincible)
         {
             playerHealth.TakeDamage(contactDamage);
             StartCoroutine(playerDamageReceiver.ApplyStunAndKnockback((target.transform.position - transform.position).normalized, knockbackForce));

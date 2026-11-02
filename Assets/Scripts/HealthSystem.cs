@@ -7,6 +7,7 @@ public class HealthSystem : MonoBehaviour
     public float invulnerabilitySeconds = 1f;
 
     public int CurrentHealth { get; private set; }
+    public event System.Action Died;
 
     public bool IsInvulnerable => invulnerabilityTimer > 0f;
 
@@ -43,16 +44,32 @@ public class HealthSystem : MonoBehaviour
         invulnerabilityTimer = Mathf.Max(invulnerabilityTimer, Mathf.Max(0f, seconds));
     }
 
-    public void Heal(int amount)
+    public bool Heal(int amount)
     {
-        if (amount <= 0 || CurrentHealth <= 0)
-            return;
+        if (amount <= 0)
+            return false;
 
+        if (CurrentHealth <= 0)
+        {
+            PlayerEnergy playerEnergy = GetComponent<PlayerEnergy>();
+            if (playerEnergy == null || !playerEnergy.AllowPlayAtZeroEnergy)
+                return false;
+        }
+
+        int healthBeforeHealing = CurrentHealth;
         CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+        return CurrentHealth > healthBeforeHealing;
+    }
+
+    public void SetMaxHealth(int amount, bool refill)
+    {
+        maxHealth = Mathf.Max(1, amount);
+        CurrentHealth = refill ? maxHealth : Mathf.Min(CurrentHealth, maxHealth);
     }
 
     void Die()
     {
+        Died?.Invoke();
         Debug.Log($"{name} died.");
     }
 }

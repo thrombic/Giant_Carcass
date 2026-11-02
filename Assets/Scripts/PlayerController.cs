@@ -8,6 +8,7 @@ using static UnityEngine.Rendering.DebugUI;
 using static UnityEngine.UI.Image;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(HealthSystem), typeof(PlayerDamageReceiver))]
+[RequireComponent(typeof(PlayerEnergy))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -20,6 +21,13 @@ public class PlayerController : MonoBehaviour
     public GameObject flarePrefab;
     public Transform firePoint;
     public float fireRate = 0.25f;
+
+    [Header("Flare Ammo")]
+    [SerializeField, Min(0)] private int maxFlareAmmo = 10;
+    [SerializeField, Min(0)] private int flareAmmo = 10;
+
+    public int FlareAmmo => flareAmmo;
+    public int MaxFlareAmmo => maxFlareAmmo;
 
     [Header("Ground Check")]
     public Transform groundCheck;
@@ -47,6 +55,7 @@ public class PlayerController : MonoBehaviour
     private bool onSlope;
 
     private Rigidbody2D rb;
+    private PlayerEnergy playerEnergy;
     private float fireCooldown;
     private bool facingLeft = true;
 
@@ -81,12 +90,20 @@ public class PlayerController : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+        maxFlareAmmo = Mathf.Max(0, maxFlareAmmo);
+        flareAmmo = Mathf.Clamp(flareAmmo, 0, maxFlareAmmo);
 
         if (GetComponent<HealthSystem>() == null)
             gameObject.AddComponent<HealthSystem>();
 
         if (GetComponent<PlayerDamageReceiver>() == null)
             gameObject.AddComponent<PlayerDamageReceiver>();
+
+        if (GetComponent<PlayerEnergy>() == null)
+            gameObject.AddComponent<PlayerEnergy>();
+        playerEnergy = GetComponent<PlayerEnergy>();
+
+        GameHud.EnsureHudExists();
     }
 
     private void OnCollisionStay2D(Collision2D collision)
@@ -175,7 +192,12 @@ public class PlayerController : MonoBehaviour
     
     void FixedUpdate()
     {
-        //if (isStunned) return;
+        if (!controlsEnabled || (playerEnergy != null && playerEnergy.IsGameOver))
+        {
+            jumpPressed = firePressed = flarePressed = toggleLightPressed = false;
+            fireCooldown -= Time.fixedDeltaTime;
+            return;
+        }
 
         HandleAim();
         HandleGroundAndSlope();
@@ -429,14 +451,32 @@ public class PlayerController : MonoBehaviour
 
     void HandleFlare()
     {
-        if (flarePressed && fireCooldown <= 0f)
+        if (!flarePressed || fireCooldown > 0f || flareAmmo <= 0 || flarePrefab == null)
+            return;
+
+        Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
+        Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
+        GameObject flareObject = Instantiate(flarePrefab, spawnPos, Quaternion.identity);
+        Flare flare = flareObject.GetComponent<Flare>();
+
+        if (flare == null)
         {
-            fireCooldown = fireRate * 2;
-            Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
-            Vector2 spawnDir = moveInput != Vector2.zero ? moveInput : (facingLeft ? Vector3.left : Vector3.right);
-            Instantiate(flarePrefab, spawnPos, Quaternion.identity)
-                .GetComponent<Flare>().SetDirection(spawnDir);
+            Destroy(flareObject);
+            return;
         }
+
+        flare.SetDirection(spawnDir);
+        flareAmmo--;
+        fireCooldown = fireRate * 2f;
+    }
+
+    public bool AddFlareAmmo(int amount)
+    {
+        if (amount <= 0 || flareAmmo >= maxFlareAmmo)
+            return false;
+
+        flareAmmo = Mathf.Min(maxFlareAmmo, flareAmmo + amount);
+        return true;
     }
 
     void HandleToggleLight()
