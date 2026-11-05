@@ -8,7 +8,6 @@ using static UnityEngine.Rendering.DebugUI;
 using static UnityEngine.UI.Image;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(HealthSystem), typeof(PlayerDamageReceiver))]
-[RequireComponent(typeof(PlayerEnergy))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -57,7 +56,7 @@ public class PlayerController : MonoBehaviour
     private bool onSlope;
 
     private Rigidbody2D rb;
-    private PlayerEnergy playerEnergy;
+    private float defaultGravityScale;
     private float fireCooldown;
     private bool facingLeft = true;
 
@@ -66,16 +65,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject bodyLight;
     [SerializeField] private GameObject jets;
 
-    [SerializeField] private Collider2D feetCollider;
-
     private Vector2 moveInput;
     private bool jumpPressed;
     private bool jumpHeld;
-    private bool jumpPeaked = true;
+    private bool jumpPeaked;
     private bool flarePressed;
     private bool firePressed;
     private bool toggleLightPressed;
-    private bool toggleLightHeld;
     private bool aimHeld;
     private bool jetpackHeld;
 
@@ -87,11 +83,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int maxFuel = 90;
 
     [SerializeField] private LightningBeam lightningBeam;
-    [SerializeField] private Animator animator;
     
     private bool controlsEnabled = true;
     public bool ControlsEnabled => controlsEnabled;
-    
+
+
+
     void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -104,12 +101,6 @@ public class PlayerController : MonoBehaviour
 
         if (GetComponent<PlayerDamageReceiver>() == null)
             gameObject.AddComponent<PlayerDamageReceiver>();
-
-        if (GetComponent<PlayerEnergy>() == null)
-            gameObject.AddComponent<PlayerEnergy>();
-        playerEnergy = GetComponent<PlayerEnergy>();
-
-        GameHud.EnsureHudExists();
     }
 
     private void OnCollisionStay2D(Collision2D collision)
@@ -194,17 +185,12 @@ public class PlayerController : MonoBehaviour
 
     public void OnToggleLight(InputValue value)
     {
-        toggleLightPressed = toggleLightHeld = !isStunned && value.isPressed;
+        toggleLightPressed = !isStunned && value.isPressed;
     }
     
     void FixedUpdate()
     {
-        if (!controlsEnabled || (playerEnergy != null && playerEnergy.IsGameOver))
-        {
-            jumpPressed = firePressed = flarePressed = toggleLightPressed = false;
-            fireCooldown -= Time.fixedDeltaTime;
-            return;
-        }
+        //if (isStunned) return;
 
         HandleAim();
         HandleGroundAndSlope();
@@ -236,7 +222,7 @@ public class PlayerController : MonoBehaviour
     {
         float dynamicCheckDistance = groundCheckDistance + Mathf.Abs(rb.linearVelocity.x) * Time.fixedDeltaTime;
 
-        Bounds b = feetCollider.bounds;
+        Bounds b = GetComponent<Collider2D>().bounds;
         float checkDistance = 0.05f;
         float widthShrink = 0.02f; // avoids catching walls
 
@@ -259,7 +245,6 @@ public class PlayerController : MonoBehaviour
         RaycastHit2D hitRight = Physics2D.Raycast(rayOriginRight, Vector2.down, dynamicCheckDistance, groundLayer);
 
         bool hitAny = hit.collider != null || hitLeft.collider != null || hitRight.collider != null;
-        float raycastAngle = 0;
 
         if (hitAny)
         {
@@ -276,7 +261,7 @@ public class PlayerController : MonoBehaviour
                 normal = hit.normal;
 
             raycastNormal = normal;
-            raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
+            float raycastAngle = Vector2.Angle(raycastNormal, Vector2.up);
 
             // raycastAngle <= maxSlopeAngle is useful for slopes that are too steep to stand on
             bool isValidAngle = raycastAngle <= maxSlopeAngle;
@@ -284,10 +269,10 @@ public class PlayerController : MonoBehaviour
 
             isGrounded = isValidAngle && !isJumpingUp;
         }
-        if (jumpPeaked)
-            isGrounded = raycastAngle <= maxSlopeAngle && hit.collider != null;
         else
+        {
             isGrounded = false;
+        }
 
         // --- Pick which normal to trust ---
         // Contacts are more accurate but a frame stale; only trust them if they
@@ -365,8 +350,7 @@ public class PlayerController : MonoBehaviour
     }
 
     void HandleMovement()
-    {   
-
+    {
         // moveInput.x replaces Input.GetAxisRaw("Horizontal")
         if (isGrounded)
         {
@@ -396,6 +380,10 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     rb.linearVelocity = Vector2.MoveTowards(rb.linearVelocity, Vector2.zero, deceleration * Time.fixedDeltaTime);
+
+                    // TODO: perhaps fuel should regen whenever grounded
+                    if (fuel < maxFuel)
+                        fuel = Mathf.Min(fuel + 5, maxFuel);
                 }
             }
             else
@@ -413,15 +401,17 @@ public class PlayerController : MonoBehaviour
                     // simple friction when no input
                     float newX = Mathf.MoveTowards(rb.linearVelocity.x, 0f, deceleration * Time.fixedDeltaTime);
                     rb.linearVelocity = new Vector2(newX, rb.linearVelocity.y);
+
+                    // TODO: perhaps fuel should regen whenever grounded
+                    if (fuel < maxFuel)
+                        fuel = Mathf.Min(fuel + 5, maxFuel);
                 }
             }
 
             if (!onSlope && !jumpHeld && rb.linearVelocity.y > 0f)
+            {
                 rb.linearVelocityY = 0;
-
-            // fuel should regen when grounded and not jetpacking
-            if (fuel < maxFuel && !jetpackHeld)
-                fuel = Mathf.Min(fuel + 5, maxFuel);
+            }
         }
         else
         {
@@ -440,20 +430,6 @@ public class PlayerController : MonoBehaviour
         else if (moveInput.x < 0 && !facingLeft) Flip();
 
         HandleLight();
-        HandleCrouch();
-    }
-
-    /** Animation logic for jump **/
-    void HandleCrouch()
-    {
-        if (Keyboard.current != null && Keyboard.current.cKey.isPressed)
-        {
-            animator.SetBool("isCrouch", true);
-        }
-        else
-        {
-            animator.SetBool("isCrouch", false);
-        }
     }
 
     void HandleLight()
@@ -476,9 +452,7 @@ public class PlayerController : MonoBehaviour
         // Blend jump direction toward the ground normal so jumping off a
         // slope gives a natural push instead of always firing straight up.
         //Vector2 jumpDir = onSlope ? Vector2.Lerp(Vector2.up, groundNormal, 0.5f).normalized : Vector2.up; 
-        
 
- 
         if (jumpPressed && isGrounded)
         {
             jumpPeaked = false;
@@ -490,28 +464,13 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x + launchVelocity.x, launchVelocity.y);
             //AudioManager.Instance.PlayJump();
         }
-        if (rb.linearVelocityY < 0)
-            jumpPeaked = true;
-            
         if (!jumpPeaked)
         {
-            if ((!jumpHeld && !jetpackHeld) && rb.linearVelocity.y > 0)
+            if (!jumpHeld && rb.linearVelocity.y > 0)
             {
                 rb.linearVelocityY = 0;
                 jumpPeaked = true;
             }
-        }
-
-        /** Animation logic for jump **/
-        // in air
-        if(jumpPressed || !isGrounded)
-        {
-            animator.SetBool("isJumping", true);
-        }
-        // on ground
-        if(isGrounded)
-        {
-            animator.SetBool("isJumping", false);
         }
     }
 
@@ -562,8 +521,6 @@ public class PlayerController : MonoBehaviour
 
     void HandleToggleLight()
     {
-        // TODO: check duration of button held, longHold to turn off all lights, otherwise toggle
-
         if (!toggleLightPressed)
             return;
 
@@ -579,18 +536,14 @@ public class PlayerController : MonoBehaviour
         if (firstLight == flashlight)
         {
             flashlight.SetActive(!flashlight.activeSelf);
-            while (toggleLightHeld)
-                yield return null;
-
+            yield return new WaitForSeconds(0.05f);
             bodyLight.GetComponent<Light2D>().intensity = 1f;
         }
         else
         {
             // body light should always be on, but its intensity will be reduced when flashlight is on
             bodyLight.GetComponent<Light2D>().intensity = 0.05f;
-            while (toggleLightHeld)
-                yield return null;
-
+            yield return new WaitForSeconds(0.05f);
             flashlight.SetActive(!flashlight.activeSelf);
         }
     }

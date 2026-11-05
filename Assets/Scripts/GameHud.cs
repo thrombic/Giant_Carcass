@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -110,7 +111,18 @@ public sealed class GameHud : MonoBehaviour
                 : new Color(0.14f, 0.09f, 0.16f);
         }
 
-        flareValue.text = player != null ? player.FlareAmmo.ToString("000") : "---";
+        flareValue.text = player != null ? FormatValue(player.FlareAmmo) : "---";
+    }
+
+    private static string FormatValue(object value)
+    {
+        if (value == null)
+            return "---";
+
+        if (value is IFormattable formattable)
+            return formattable.ToString("000", null);
+
+        return value.ToString();
     }
 
     private void EnsureInterface()
