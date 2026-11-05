@@ -93,6 +93,7 @@ public class PlayerController : MonoBehaviour
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
+        defaultGravityScale = rb.gravityScale;  
         maxFlareAmmo = Mathf.Max(0, maxFlareAmmo);
         flareAmmo = Mathf.Clamp(flareAmmo, 0, maxFlareAmmo);
 
