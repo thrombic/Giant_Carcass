@@ -6626,7 +6626,7 @@ GameObject:
   - component: {fileID: 934512967}
   m_Layer: 7
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6889,7 +6889,7 @@ MonoBehaviour:
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: 
+  m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
 --- !u!114 &934512962
@@ -7365,7 +7365,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2000000201}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1037704251
@@ -13923,6 +13924,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameHud
   screenOffset: {x: 18, y: 18}
   hudScale: 1
+--- !u!1001 &2000000200
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 980227384}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b49ffdc0e005e3a4c9b88e52b44198ce, type: 3}
+--- !u!4 &2000000201 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1655302413004567649, guid: b49ffdc0e005e3a4c9b88e52b44198ce, type: 3}
+  m_PrefabInstance: {fileID: 2000000200}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

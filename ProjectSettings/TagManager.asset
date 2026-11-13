@@ -3,8 +3,7 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags:
-  - Player
+  tags: []
   layers:
   - Default
   - TransparentFX
@@ -42,8 +41,17 @@ TagManager:
   - name: Background
     uniqueID: 3237502505
     locked: 0
+  - name: Parallax Background
+    uniqueID: 179530986
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Foreground
+    uniqueID: 705896731
+    locked: 0
+  - name: Parallax Foreground
+    uniqueID: 1041958388
     locked: 0
   m_RenderingLayers:
   - Default
