@@ -32,6 +32,12 @@ public sealed class GameHud : MonoBehaviour
 
     private void Awake()
     {
+        // Don't run in the start menu
+        if (SceneManager.GetActiveScene().name == "StartMenu")
+        {
+            Destroy(gameObject);
+            return;
+        }
         if (!Application.isPlaying)
             return;
 
