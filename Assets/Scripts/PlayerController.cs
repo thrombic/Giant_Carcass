@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -52,7 +53,7 @@ public class PlayerController : MonoBehaviour
     // Slope state, updated each ground check in HandleGroundAndSlope()
     private Vector2 groundNormal = Vector2.up;
     private float currentSlopeAngle;
-    private bool isGrounded;
+    public bool isGrounded;
     private bool onSlope;
 
     private Rigidbody2D rb;
@@ -90,12 +91,15 @@ public class PlayerController : MonoBehaviour
 
 
     void Awake()
-    {
+    {   
         spriteRenderer = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
         defaultGravityScale = rb.gravityScale;  
         maxFlareAmmo = Mathf.Max(0, maxFlareAmmo);
         flareAmmo = Mathf.Clamp(flareAmmo, 0, maxFlareAmmo);
+
+        if (GetComponent<PlayerAnimationDriver>() == null)
+            gameObject.AddComponent<PlayerAnimationDriver>();
 
         if (GetComponent<HealthSystem>() == null)
             gameObject.AddComponent<HealthSystem>();
